@@ -399,6 +399,7 @@ dtb-$(CONFIG_MACH_SUN8I_R40) += \
 dtb-$(CONFIG_MACH_SUN8I_V3S) += \
 	sun8i-v3s-licheepi-zero.dtb
 dtb-$(CONFIG_MACH_SUN50I_H5) += \
+	sun50i-h5-emlid-neutis-n5-devboard.dtb \
 	sun50i-h5-libretech-all-h3-cc.dtb \
 	sun50i-h5-nanopi-neo2.dtb \
 	sun50i-h5-nanopi-neo-plus2.dtb \
@@ -458,12 +459,12 @@ dtb-$(CONFIG_MX6UL) += \
 	imx6ul-isiot-nand.dtb \
 	imx6ul-opos6uldev.dtb \
 	imx6ul-14x14-evk.dtb \
-	imx6ul-9x9-evk.dtb
+	imx6ul-9x9-evk.dtb \
+	imx6ul-phycore-segin.dtb
 
 dtb-$(CONFIG_MX6ULL) += imx6ull-14x14-evk.dtb
 
-dtb-$(CONFIG_MX7) += imx7-colibri.dtb \
-	imx7d-sdb.dtb \
+dtb-$(CONFIG_MX7) += imx7d-sdb.dtb \
 	imx7d-sdb-qspi.dtb
 
 dtb-$(CONFIG_ARCH_MX7ULP) += imx7ulp-evk.dtb

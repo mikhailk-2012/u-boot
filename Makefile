@@ -1254,7 +1254,7 @@ tpl/u-boot-with-tpl.bin: tpl/u-boot-tpl.bin u-boot.bin FORCE
 SPL: spl/u-boot-spl.bin FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 
-ifeq ($(CONFIG_ARCH_IMX8M), y)
+ifeq ($(CONFIG_ARCH_IMX8M)$(CONFIG_ARCH_IMX8), y)
 flash.bin: spl/u-boot-spl.bin u-boot.itb FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/mach-imx $@
 endif
@@ -1740,7 +1740,8 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
 MRPROPER_DIRS  += include/config include/generated spl tpl \
 		  .tmp_objdiff
 MRPROPER_FILES += .config .config.old include/autoconf.mk* include/config.h \
-		  ctags etags tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS
+		  ctags etags tags TAGS cscope* GPATH GTAGS GRTAGS GSYMS \
+		  drivers/video/fonts/*.S
 
 # clean - Delete most, but leave enough to build external modules
 #
@@ -1795,7 +1796,7 @@ distclean: mrproper
 		-o -name '.*.rej' -o -name '*%' -o -name 'core' \
 		-o -name '*.pyc' \) \
 		-type f -print | xargs rm -f
-	@rm -f boards.cfg
+	@rm -f boards.cfg CHANGELOG
 
 backup:
 	F=`basename $(srctree)` ; cd .. ; \

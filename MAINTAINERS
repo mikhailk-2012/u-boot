@@ -91,6 +91,28 @@ S:	Maintainted
 T:	git git://git.denx.de/u-boot-socfpga.git
 F:	arch/arm/mach-socfpga/
 
+ARM AMLOGIC SOC SUPPORT
+M:	Neil Armstrong <narmstrong@baylibre.com>
+S:	Maintained
+L:	u-boot-amlogic@groups.io
+T:	git git://git.denx.de/u-boot-amlogic.git
+F:	arch/arm/mach-meson/
+F:	arch/arm/include/asm/arch-meson/
+F:	drivers/clk/clk_meson*
+F:	drivers/serial/serial_meson.c
+F:	drivers/reset/reset-meson.c
+F:	drivers/i2c/meson_i2c.c
+F:	drivers/net/phy/meson-gxl.c
+F:	drivers/adc/meson-saradc.c
+F:	drivers/phy/meson*
+F:	drivers/mmc/meson_gx_mmc.c
+F:	drivers/spi/meson_spifc.c
+F:	drivers/pinctrl/meson/
+F:	drivers/power/domain/meson-gx-pwrc-vpu.c
+F:	drivers/video/meson/
+F:	include/configs/meson64.h
+N:	meson
+
 ARM ATMEL AT91
 M:	Andreas Bießmann <andreas@biessmann.org>
 S:	Maintained
@@ -130,7 +152,7 @@ F:	include/configs/turris_*.h
 
 ARM FREESCALE IMX
 M:	Stefano Babic <sbabic@denx.de>
-M:	Fabio Estevam <fabio.estevam@nxp.com>
+M:	Fabio Estevam <festevam@gmail.com>
 R:	NXP i.MX U-Boot Team <uboot-imx@nxp.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-imx.git
@@ -267,7 +289,7 @@ M:	Christophe Kerello <christophe.kerello@st.com>
 M:	Patrice Chotard <patrice.chotard@st.com>
 L:	uboot-stm32@st-md-mailman.stormreply.com (moderated for non-subscribers)
 S:	Maintained
-F:	arch/arm/mach-stm32mp
+F:	arch/arm/mach-stm32mp/
 F:	drivers/clk/clk_stm32mp1.c
 F:	drivers/i2c/stm32f7_i2c.c
 F:	drivers/misc/stm32mp_fuse.c
@@ -362,7 +384,7 @@ ARM ZYNQMP
 M:	Michal Simek <michal.simek@xilinx.com>
 S:	Maintained
 T:	git git://git.denx.de/u-boot-microblaze.git
-F:	arch/arm/cpu/armv8/zynqmp/
+F:	arch/arm/mach-zynqmp/
 F:	drivers/clk/clk_zynqmp.c
 F:	drivers/fpga/zynqpl.c
 F:	drivers/gpio/zynq_gpio.c

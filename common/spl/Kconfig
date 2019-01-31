@@ -794,7 +794,7 @@ config SPL_USB_ETHER
 	  since the network stack uses a number of environment variables.
 	  See also SPL_NET_SUPPORT and SPL_ETH_SUPPORT.
 
-config SPL_DFU_SUPPORT
+config SPL_DFU
 	bool "Support DFU (Device Firmware Upgrade)"
 	select SPL_HASH_SUPPORT
 	select SPL_DFU_NO_RESET
@@ -809,11 +809,11 @@ config SPL_DFU_SUPPORT
 
 choice
 	bool "DFU device selection"
-	depends on SPL_DFU_SUPPORT
+	depends on SPL_DFU
 
 config SPL_DFU_RAM
 	bool "RAM device"
-	depends on SPL_DFU_SUPPORT && SPL_RAM_SUPPORT
+	depends on SPL_DFU && SPL_RAM_SUPPORT
 	help
 	 select RAM/DDR memory device for loading binary images
 	 (u-boot/kernel) to the selected device partition using
@@ -911,6 +911,8 @@ config TPL_BOARD_INIT
 config TPL_LDSCRIPT
         string "Linker script for the TPL stage"
 	depends on TPL
+	default "arch/arm/cpu/armv8/u-boot-spl.lds" if ARM64
+	default "arch/$(ARCH)/cpu/u-boot-spl.lds"
 	help
 	  The TPL stage will usually require a different linker-script
 	  (as it runs from a different memory region) than the regular
