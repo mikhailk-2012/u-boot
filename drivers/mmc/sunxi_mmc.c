@@ -531,11 +531,11 @@ struct mmc *sunxi_mmc_init(int sdc_no)
 	if (sdc_no == 2)
 		cfg->host_caps = MMC_MODE_8BIT;
 #endif
-	cfg->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
+	//cfg->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
 	cfg->b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
 
 	cfg->f_min = 400000;
-	cfg->f_max = 52000000;
+	cfg->f_max = /*52000000*/ 12000000;
 
 	if (mmc_resource_init(sdc_no) != 0)
 		return NULL;
