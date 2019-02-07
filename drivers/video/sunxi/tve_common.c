@@ -44,6 +44,7 @@ void tvencoder_mode_set(struct sunxi_tve_reg * const tve, enum tve_mode mode)
 		writel(SUNXI_TVE_UNKNOWN2_PAL, &tve->unknown2);
 		writel(SUNXI_TVE_ACTIVE_NUM_COMPOSITE, &tve->active_num);
 		writel(SUNXI_TVE_CHROMA_BW_GAIN_COMP, &tve->chroma_bw_gain);
+		writel(SUNXI_TVE_LUMA_NOTCH_FREQSEL_PAL, &tve->notch_freq);
 		writel(SUNXI_TVE_NOTCH_WIDTH_COMPOSITE, &tve->notch_width);
 		writel(SUNXI_TVE_RESYNC_NUM_PAL, &tve->resync_num);
 		writel(SUNXI_TVE_SLAVE_PARA_COMPOSITE, &tve->slave_para);
@@ -72,6 +73,7 @@ void tvencoder_mode_set(struct sunxi_tve_reg * const tve, enum tve_mode mode)
 		writel(SUNXI_TVE_SYNC_VBI_LEVEL_NTSC, &tve->sync_vbi_level);
 		writel(SUNXI_TVE_ACTIVE_NUM_COMPOSITE, &tve->active_num);
 		writel(SUNXI_TVE_CHROMA_BW_GAIN_COMP, &tve->chroma_bw_gain);
+		writel(SUNXI_TVE_LUMA_NOTCH_FREQSEL_NTSC, &tve->notch_freq);
 		writel(SUNXI_TVE_NOTCH_WIDTH_COMPOSITE, &tve->notch_width);
 		writel(SUNXI_TVE_RESYNC_NUM_NTSC, &tve->resync_num);
 		writel(SUNXI_TVE_SLAVE_PARA_COMPOSITE, &tve->slave_para);

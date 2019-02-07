@@ -83,7 +83,7 @@ struct sunxi_tve_reg {
 #else
 #define SUNXI_TVE_DAC_CFG0_COMPOSITE		0x403f0008
 #endif
-#define SUNXI_TVE_FILTER_COMPOSITE		0x00000120
+#define SUNXI_TVE_FILTER_COMPOSITE		0x00010120
 #define SUNXI_TVE_CHROMA_FREQ_PAL_M		0x21e6efe3
 #define SUNXI_TVE_CHROMA_FREQ_PAL_NC		0x21f69446
 #define SUNXI_TVE_PORCH_NUM_PAL			0x008a0018
@@ -123,6 +123,9 @@ struct sunxi_tve_reg {
 #define SUNXI_TVE_RESYNC_NUM_PAL		0x800d000c
 #define SUNXI_TVE_RESYNC_NUM_NTSC		0x000e000c
 #define SUNXI_TVE_SLAVE_PARA_COMPOSITE		0x00000000
+/* notch_width=1 -narrow */
+#define SUNXI_TVE_LUMA_NOTCH_FREQSEL_PAL	0x00000005
+#define SUNXI_TVE_LUMA_NOTCH_FREQSEL_NTSC	0x00000004
 
 void tvencoder_mode_set(struct sunxi_tve_reg * const tve, enum tve_mode mode);
 void tvencoder_enable(struct sunxi_tve_reg * const tve);
