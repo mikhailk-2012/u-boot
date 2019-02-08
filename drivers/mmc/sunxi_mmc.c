@@ -624,11 +624,15 @@ static int sunxi_mmc_probe(struct udevice *dev)
 		cfg->host_caps |= MMC_MODE_8BIT;
 	if (bus_width >= 4)
 		cfg->host_caps |= MMC_MODE_4BIT;
-	cfg->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
+
 	cfg->b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
 
 	cfg->f_min = 400000;
-	cfg->f_max = 52000000;
+	cfg->f_max = dev_read_u32_default(dev, "max-frequency", 52000000);
+	/* do not use any HS mode for low clock speed
+	 * A20 BROM can't boot from emmc already configured in HS mode. */
+	if (cfg->f_max > 26000000)
+		cfg->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
 	priv->reg = (void *)dev_read_addr(dev);
 	priv->variant =
