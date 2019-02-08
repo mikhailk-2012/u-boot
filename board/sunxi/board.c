@@ -746,20 +746,35 @@ void get_board_serial(struct tag_serialnr *serialnr)
 static void parse_spl_header(const uint32_t spl_addr)
 {
 	struct boot_file_head *spl = get_spl_header(SPL_ENV_HEADER_VERSION);
+	int ret;
 
 	if (spl == INVALID_SPL_HEADER)
 		return;
+printf("\n%s: fel_script_address=0x%x fel_uEnv_length=%d\n", __FUNCTION__,
+		spl->fel_script_address, spl->fel_uEnv_length);
 
-	if (!spl->fel_script_address)
-		return;
+	if (!spl->fel_script_address) {
+		if (memcmp((void*)0x43100000, "#=uEnv", 6)) {
+			printf("#=uEnv not found\n");
+			return;
+		}
+		spl->fel_script_address = 0x43100000;
+		spl->fel_uEnv_length = strlen((char*)spl->fel_script_address);
+	}
 
 	if (spl->fel_uEnv_length != 0) {
 		/*
 		 * data is expected in uEnv.txt compatible format, so "env
 		 * import -t" the string(s) at fel_script_address right away.
 		 */
-		himport_r(&env_htab, (char *)(uintptr_t)spl->fel_script_address,
+
+		ret = himport_r(&env_htab, (char *)(uintptr_t)spl->fel_script_address,
 			  spl->fel_uEnv_length, '\n', H_NOCLEAR, 0, 0, NULL);
+		if (!ret)
+			printf("uEnv import failed!\n");
+		else
+			printf("uEnv imported\n");
+
 		return;
 	}
 	/* otherwise assume .scr format (mkimage-type script) */
