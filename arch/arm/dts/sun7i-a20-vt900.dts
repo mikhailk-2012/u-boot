@@ -69,57 +69,53 @@
 	leds {
 		compatible = "gpio-leds";
 		pinctrl-names = "default";
-		pinctrl-0 = <&led_pins>;
+		pinctrl-0 = <&led_pins_vt900v2>;
 
 		hdd {
-			label = "hdd_led";
-			gpios = <&pio 3 22 GPIO_ACTIVE_HIGH>; /* PC22 */
+			label = "hdd-activity";
+			gpios = <&pio 3 22 GPIO_ACTIVE_HIGH>; /* PD22 */
+			linux,default-trigger = "disk-activity";
 		};
 
 		err {
-			label = "err_led";
-			gpios = <&pio 3 23 GPIO_ACTIVE_HIGH>; /* PC23 */
+			label = "error";
+			gpios = <&pio 3 23 GPIO_ACTIVE_HIGH>; /* PD23 */
 		};
 
 		status {
-			label = "status_led";
-			gpios = <&pio 3 24 GPIO_ACTIVE_HIGH>; /* PC24 */
+			label = "status";
+			gpios = <&pio 3 24 GPIO_ACTIVE_HIGH>; /* PD24 */
 			default-state = "on";
 			linux,default-trigger = "heartbeat";
 		};
 
-		can {
-			label = "can";
-			gpios = <&pio 3 25 GPIO_ACTIVE_HIGH>; /* PC25 */
+		can-bus {
+			label = "can-bus";
+			gpios = <&pio 3 25 GPIO_ACTIVE_HIGH>; /* PD25 */
 		};
 	};
 
-	pwr {
-		compatible = "gpio-leds";
+	reg_mmc0_3v3: mmc0-3v3 {
+		status = "okay";
+		compatible = "regulator-fixed";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pwr_pins>;
-
-		usb1_pwr {
-			label = "usb1_pwr";
-			gpios = <&pio 7 14 GPIO_ACTIVE_HIGH>; /* PH14 */
-			default-state = "on";
-		};
-
-		usb2_pwr {
-			label = "usb2_pwr";
-			gpios = <&pio 7 15 GPIO_ACTIVE_HIGH>; /* PH15 */
-			default-state = "on";
-		};
+		pinctrl-0 = <&mmc0_power_pin_vt900v2>;
+		regulator-name = "mmc0-3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		startup-delay-us = <100000>;		
+		regulator-boot-on;
+		gpio = <&pio 8 15 GPIO_ACTIVE_HIGH>; /* PI15 */
 	};
 
+	/* emmc-reset is unusable on Marsboard A20 new board rev 2.0  */
 	mmc2_pwrseq: pwrseq {
 		compatible = "mmc-pwrseq-emmc";
-		reset-gpios = <&pio 2 24 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&pio 2 24 GPIO_ACTIVE_LOW>;  /* PC24 */
 	};
 };
 
 &ahci {
-	target-supply = <&reg_ahci_5v>;
 	status = "okay";
 };
 
@@ -151,7 +147,7 @@
 
 &gmac {
 	pinctrl-names = "default";
-	pinctrl-0 = <&gmac_pins_mii_a>, <&gmac_txerr>;
+	pinctrl-0 = <&gmac_pins_mii_17>;
 	phy = <&phy1>;
 	phy-mode = "mii";
 	status = "okay";
@@ -206,12 +202,12 @@
 
 &mmc0 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&mmc0_pins_a>;
+	pinctrl-0 = <&mmc0_pins_a>, <&mmc0_cd_pin_bananapi>;
 	vmmc-supply = <&reg_vcc3v3>;
 	bus-width = <4>;
-	cd-gpios = <&pio 7 10 GPIO_ACTIVE_HIGH>; /* PH10 */
+	cd-gpios = <&pio 7 10 GPIO_ACTIVE_HIGH>; /* PH10 */	
 	cd-inverted;
-	status = "okay";
+	status = "okay";	
 };
 
 &mmc2 {
@@ -221,8 +217,8 @@
 	vqmmc-supply = <&reg_vcc3v3>;
 	bus-width = <4>;
 	non-removable;
-	mmc-pwrseq = <&mmc2_pwrseq>;
-	max-frequency = <12000000>;
+	mmc-pwrseq = <&mmc2_pwrseq>;	
+	max-frequency = <12000000>;   /* for relaible emmc boot */
 	status = "okay";
 
 	emmc: emmc@0 {
@@ -245,20 +241,35 @@
 };
 
 &pio {
-	gmac_txerr: gmac_txerr@0 {
-		pins = "PA17";
-		function = "gmac";
+	vcc-pa-supply = <&reg_vcc3v3>;
+	vcc-pb-supply = <&reg_vcc3v3>;
+	vcc-pc-supply = <&reg_vcc3v3>;
+	vcc-pd-supply = <&reg_vcc3v3>;
+	vcc-pe-supply = <&reg_vcc3v3>;
+	vcc-pf-supply = <&reg_vcc3v3>;
+	vcc-pg-supply = <&reg_vcc3v3>;
+	vcc-ph-supply = <&reg_vcc3v3>;
+	vcc-pi-supply = <&reg_vcc3v3>;
+
+	i2c4_pins_vt900v2: i2c4@0 {
+		pins = "PI2", "PI3";
+		function = "i2c4";
+	};
+	uart3_pins_vt900v2: uart3@1 {
+		pins = "PH0", "PH1";
+		function = "uart3";
+	};
+	uart7_pins_vt900v2: uart7@0 {
+		pins = "PI20", "PI21";
+		function = "uart7";
 	};
 
-	led_pins: led_pins@0 {
-		pins = "PD22", "PD23", "PD24", "PD25";
-		function = "gpio_out";
+	led_pins_vt900v2: led_pins@0 {
+		allwinner,pins = "PD22", "PD23", "PD24", "PD25",
+			"PE0", "PE1", "PE10", "PE11";
+		allwinner,function = "gpio_out";
 	};
 
-	pwr_pins: pwr_pins@0 {
-		pins = "PH14", "PH15";
-		function = "gpio_out";
-	};
 	usb0_id_detect_pin_vt900v2: usb0_id_detect_pin_vt900v2@0 {
 		allwinner,pins = "PH11";
 		allwinner,function = "gpio_in";
@@ -280,6 +291,26 @@
 	usb2_vbus_pin_vt900v2: usb1_vbus_pin@0 {
 		allwinner,pins = "PH15";
 		allwinner,function = "gpio_out";
+	};
+
+	mmc0_cd_pin_bananapi: mmc0_cd_pin@0 {
+		pins = "PH10";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	mmc0_power_pin_vt900v2: mmc0_power_pin@0 {
+		allwinner,pins = "PI15";
+		allwinner,function = "gpio_out";
+		drive-strength = <20>;
+	};
+
+	gmac_pins_mii_17: gmac_mii_17@0 {
+		pins = "PA0", "PA1", "PA2",
+		       "PA3", "PA4", "PA5", "PA6",
+		       "PA7", "PA8", "PA9", "PA10",
+		       "PA11", "PA12", "PA13", "PA14",
+		       "PA15", "PA16", "PA17";
+		function = "gmac";
 	};
 };
 
@@ -358,8 +389,7 @@
 };
 
 &usb_otg {
-	/*dr_mode = "otg";*/
-	dr_mode = "peripheral";
+	dr_mode = "otg";
 	status = "okay";
 };
 
