@@ -387,7 +387,7 @@ config SPL_ETH_SUPPORT
 	  is required since the network stack uses a number of environment
 	  variables. See also SPL_NET_SUPPORT.
 
-config SPL_EXT_SUPPORT
+config SPL_FS_EXT4
 	bool "Support EXT filesystems"
 	help
 	  Enable support for EXT2/3/4 filesystems with SPL. This permits
@@ -395,7 +395,7 @@ config SPL_EXT_SUPPORT
 	  filesystem from within SPL. Support for the underlying block
 	  device (e.g. MMC or USB) must be enabled separately.
 
-config SPL_FAT_SUPPORT
+config SPL_FS_FAT
 	bool "Support FAT filesystems"
 	select FS_FAT
 	help
@@ -403,6 +403,13 @@ config SPL_FAT_SUPPORT
 	  permits U-Boot (or Linux in Falcon mode) to be loaded from a FAT
 	  filesystem from within SPL. Support for the underlying block
 	  device (e.g. MMC or USB) must be enabled separately.
+
+config SPL_FAT_WRITE
+	bool "Support write for FAT filesystems"
+	help
+	  Enable write support for FAT and VFAT filesystems with SPL.
+	  Support for the underlying block device (e.g. MMC or USB) must be
+	  enabled separately.
 
 config SPL_FPGA_SUPPORT
 	bool "Support FPGAs"
@@ -730,12 +737,33 @@ config SPL_SPI_FLASH_SUPPORT
 	  lines). This enables the drivers in drivers/mtd/spi as part of an
 	  SPL build. This normally requires SPL_SPI_SUPPORT.
 
+if SPL_SPI_FLASH_SUPPORT
+
+config SPL_SPI_FLASH_TINY
+	bool "Enable low footprint SPL SPI Flash support"
+	depends on !SPI_FLASH_BAR
+	default y if SPI_FLASH
+	help
+	 Enable lightweight SPL SPI Flash support that supports just reading
+	 data/images from flash. No support to write/erase flash. Enable
+	 this if you have SPL size limitations and don't need full
+	 fledged SPI flash support.
+
+config SPL_SPI_FLASH_SFDP_SUPPORT
+	bool "SFDP table parsing support for SPI NOR flashes"
+	depends on !SPI_FLASH_BAR && !SPL_SPI_FLASH_TINY
+	help
+	 Enable support for parsing and auto discovery of parameters for
+	 SPI NOR flashes using Serial Flash Discoverable Parameters (SFDP)
+	 tables as per JESD216 standard in SPL.
+
 config SPL_SPI_LOAD
 	bool "Support loading from SPI flash"
-	depends on SPL_SPI_FLASH_SUPPORT
 	help
 	  Enable support for loading next stage, U-Boot or otherwise, from
 	  SPI NOR in U-Boot SPL.
+
+endif # SPL_SPI_FLASH_SUPPORT
 
 config SPL_SPI_SUPPORT
 	bool "Support SPI drivers"

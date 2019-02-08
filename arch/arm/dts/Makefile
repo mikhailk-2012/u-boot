@@ -40,6 +40,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-veyron-jerry.dtb \
 	rk3288-veyron-mickey.dtb \
 	rk3288-veyron-minnie.dtb \
+	rk3288-veyron-speedy.dtb \
 	rk3288-vyasa.dtb \
 	rk3328-evb.dtb \
 	rk3399-ficus.dtb \
@@ -95,6 +96,7 @@ dtb-$(CONFIG_ARCH_MVEBU) +=			\
 	armada-3720-db.dtb			\
 	armada-3720-espressobin.dtb		\
 	armada-3720-turris-mox.dtb		\
+	armada-3720-uDPU.dts			\
 	armada-375-db.dtb			\
 	armada-388-clearfog.dtb			\
 	armada-388-gp.dtb			\
@@ -194,6 +196,7 @@ dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb am335x-bone.dtb \
 	am335x-icev2.dtb \
 	am335x-pxm50.dtb \
 	am335x-rut.dtb \
+	am335x-shc.dtb \
 	am335x-pdu001.dtb \
 	am335x-chiliboard.dtb \
 	am335x-sl50.dtb \
