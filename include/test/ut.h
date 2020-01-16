@@ -61,7 +61,8 @@ void ut_failf(struct unit_test_state *uts, const char *fname, int line,
 	if (val1 != val2) {						\
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " == " #expr2,				\
-			 "Expected %d, got %d", val1, val2);		\
+			 "Expected %#x (%d), got %#x (%d)", val1, val1,	\
+			 val2, val2);					\
 		return CMD_RET_FAILURE;					\
 	}								\
 }
@@ -147,5 +148,21 @@ void ut_failf(struct unit_test_state *uts, const char *fname, int line,
 
 /* Assert that an operation succeeds (returns 0) */
 #define ut_assertok(cond)	ut_asserteq(0, cond)
+
+/**
+ * ut_check_free() - Return the number of bytes free in the malloc() pool
+ *
+ * @return bytes free
+ */
+ulong ut_check_free(void);
+
+/**
+ * ut_check_delta() - Return the number of bytes allocated/freed
+ *
+ * @last: Last value from ut_check_free
+ * @return free memory delta from @last; positive means more memory has been
+ *	allocated, negative means less has been allocated (i.e. some is freed)
+ */
+long ut_check_delta(ulong last);
 
 #endif

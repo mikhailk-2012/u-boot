@@ -313,10 +313,6 @@ static int mvebu_pcie_probe(struct udevice *dev)
 	reg |= BIT(10);		/* disable interrupts */
 	writel(reg, pcie->base + PCIE_CMD_OFF);
 
-	/* Set BAR0 to internal registers */
-	writel(SOC_REGS_PHY_BASE, pcie->base + PCIE_BAR_LO_OFF(0));
-	writel(0, pcie->base + PCIE_BAR_HI_OFF(0));
-
 	/* PCI memory space */
 	pci_set_region(hose->regions + 0, pcie->mem.start,
 		       pcie->mem.start, PCIE_MEM_SIZE, PCI_REGION_MEM);
@@ -325,6 +321,10 @@ static int mvebu_pcie_probe(struct udevice *dev)
 		       gd->ram_size,
 		       PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 	hose->region_count = 2;
+
+	/* Set BAR0 to internal registers */
+	writel(SOC_REGS_PHY_BASE, pcie->base + PCIE_BAR_LO_OFF(0));
+	writel(0, pcie->base + PCIE_BAR_HI_OFF(0));
 
 	bus++;
 
@@ -369,6 +369,12 @@ static int mvebu_get_tgt_attr(ofnode node, int devfn,
 	if (!range)
 		return -EINVAL;
 
+	/*
+	 * Linux uses of_n_addr_cells() to get the number of address cells
+	 * here. Currently this function is only available in U-Boot when
+	 * CONFIG_OF_LIVE is enabled. Until this is enabled for MVEBU in
+	 * general, lets't hardcode the "pna" value in the U-Boot code.
+	 */
 	pna = 2; /* hardcoded for now because of lack of of_n_addr_cells() */
 	rangesz = pna + na + ns;
 	nranges = rlen / sizeof(__be32) / rangesz;

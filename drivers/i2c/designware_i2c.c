@@ -4,6 +4,7 @@
  * Vipin Kumar, ST Micoelectronics, vipin.kumar@st.com.
  */
 
+#include <clk.h>
 #include <common.h>
 #include <dm.h>
 #include <i2c.h>
@@ -12,40 +13,17 @@
 #include <asm/io.h>
 #include "designware_i2c.h"
 
-struct dw_scl_sda_cfg {
-	u32 ss_hcnt;
-	u32 fs_hcnt;
-	u32 ss_lcnt;
-	u32 fs_lcnt;
-	u32 sda_hold;
-};
-
-#ifdef CONFIG_X86
-/* BayTrail HCNT/LCNT/SDA hold time */
-static struct dw_scl_sda_cfg byt_config = {
-	.ss_hcnt = 0x200,
-	.fs_hcnt = 0x55,
-	.ss_lcnt = 0x200,
-	.fs_lcnt = 0x99,
-	.sda_hold = 0x6,
-};
-#endif
-
-struct dw_i2c {
-	struct i2c_regs *regs;
-	struct dw_scl_sda_cfg *scl_sda_cfg;
-	struct reset_ctl reset_ctl;
-};
-
 #ifdef CONFIG_SYS_I2C_DW_ENABLE_STATUS_UNSUPPORTED
-static void dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
+static int  dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
 {
 	u32 ena = enable ? IC_ENABLE_0B : 0;
 
 	writel(ena, &i2c_base->ic_enable);
+
+	return 0;
 }
 #else
-static void dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
+static int dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
 {
 	u32 ena = enable ? IC_ENABLE_0B : 0;
 	int timeout = 100;
@@ -53,7 +31,7 @@ static void dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
 	do {
 		writel(ena, &i2c_base->ic_enable);
 		if ((readl(&i2c_base->ic_enable_status) & IC_ENABLE_0B) == ena)
-			return;
+			return 0;
 
 		/*
 		 * Wait 10 times the signaling period of the highest I2C
@@ -62,8 +40,9 @@ static void dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
 		 */
 		udelay(25);
 	} while (timeout--);
-
 	printf("timeout in %sabling I2C adapter\n", enable ? "en" : "dis");
+
+	return -ETIMEDOUT;
 }
 #endif
 
@@ -75,18 +54,25 @@ static void dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)
  */
 static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
 					   struct dw_scl_sda_cfg *scl_sda_cfg,
-					   unsigned int speed)
+					   unsigned int speed,
+					   unsigned int bus_mhz)
 {
 	unsigned int cntl;
 	unsigned int hcnt, lcnt;
+	unsigned int ena;
 	int i2c_spd;
 
-	if (speed >= I2C_MAX_SPEED)
+	/* Allow max speed if there is no config, or the config allows it */
+	if (speed >= I2C_MAX_SPEED &&
+	    (!scl_sda_cfg || scl_sda_cfg->has_max_speed))
 		i2c_spd = IC_SPEED_MODE_MAX;
 	else if (speed >= I2C_FAST_SPEED)
 		i2c_spd = IC_SPEED_MODE_FAST;
 	else
 		i2c_spd = IC_SPEED_MODE_STANDARD;
+
+	/* Get enable setting for restore later */
+	ena = readl(&i2c_base->ic_enable) & IC_ENABLE_0B;
 
 	/* to set speed cltr must be disabled */
 	dw_i2c_enable(i2c_base, false);
@@ -94,20 +80,18 @@ static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
 	cntl = (readl(&i2c_base->ic_con) & (~IC_CON_SPD_MSK));
 
 	switch (i2c_spd) {
-#ifndef CONFIG_X86 /* No High-speed for BayTrail yet */
 	case IC_SPEED_MODE_MAX:
 		cntl |= IC_CON_SPD_SS;
 		if (scl_sda_cfg) {
 			hcnt = scl_sda_cfg->fs_hcnt;
 			lcnt = scl_sda_cfg->fs_lcnt;
 		} else {
-			hcnt = (IC_CLK * MIN_HS_SCL_HIGHTIME) / NANO_TO_MICRO;
-			lcnt = (IC_CLK * MIN_HS_SCL_LOWTIME) / NANO_TO_MICRO;
+			hcnt = (bus_mhz * MIN_HS_SCL_HIGHTIME) / NANO_TO_MICRO;
+			lcnt = (bus_mhz * MIN_HS_SCL_LOWTIME) / NANO_TO_MICRO;
 		}
 		writel(hcnt, &i2c_base->ic_hs_scl_hcnt);
 		writel(lcnt, &i2c_base->ic_hs_scl_lcnt);
 		break;
-#endif
 
 	case IC_SPEED_MODE_STANDARD:
 		cntl |= IC_CON_SPD_SS;
@@ -115,8 +99,8 @@ static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
 			hcnt = scl_sda_cfg->ss_hcnt;
 			lcnt = scl_sda_cfg->ss_lcnt;
 		} else {
-			hcnt = (IC_CLK * MIN_SS_SCL_HIGHTIME) / NANO_TO_MICRO;
-			lcnt = (IC_CLK * MIN_SS_SCL_LOWTIME) / NANO_TO_MICRO;
+			hcnt = (bus_mhz * MIN_SS_SCL_HIGHTIME) / NANO_TO_MICRO;
+			lcnt = (bus_mhz * MIN_SS_SCL_LOWTIME) / NANO_TO_MICRO;
 		}
 		writel(hcnt, &i2c_base->ic_ss_scl_hcnt);
 		writel(lcnt, &i2c_base->ic_ss_scl_lcnt);
@@ -129,8 +113,8 @@ static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
 			hcnt = scl_sda_cfg->fs_hcnt;
 			lcnt = scl_sda_cfg->fs_lcnt;
 		} else {
-			hcnt = (IC_CLK * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
-			lcnt = (IC_CLK * MIN_FS_SCL_LOWTIME) / NANO_TO_MICRO;
+			hcnt = (bus_mhz * MIN_FS_SCL_HIGHTIME) / NANO_TO_MICRO;
+			lcnt = (bus_mhz * MIN_FS_SCL_LOWTIME) / NANO_TO_MICRO;
 		}
 		writel(hcnt, &i2c_base->ic_fs_scl_hcnt);
 		writel(lcnt, &i2c_base->ic_fs_scl_lcnt);
@@ -143,8 +127,9 @@ static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
 	if (scl_sda_cfg)
 		writel(scl_sda_cfg->sda_hold, &i2c_base->ic_sda_hold);
 
-	/* Enable back i2c now speed set */
-	dw_i2c_enable(i2c_base, true);
+	/* Restore back i2c now speed set */
+	if (ena == IC_ENABLE_0B)
+		dw_i2c_enable(i2c_base, true);
 
 	return 0;
 }
@@ -370,10 +355,14 @@ static int __dw_i2c_write(struct i2c_regs *i2c_base, u8 dev, uint addr,
  *
  * Initialization function.
  */
-static void __dw_i2c_init(struct i2c_regs *i2c_base, int speed, int slaveaddr)
+static int __dw_i2c_init(struct i2c_regs *i2c_base, int speed, int slaveaddr)
 {
+	int ret;
+
 	/* Disable i2c */
-	dw_i2c_enable(i2c_base, false);
+	ret = dw_i2c_enable(i2c_base, false);
+	if (ret)
+		return ret;
 
 	writel(IC_CON_SD | IC_CON_RE | IC_CON_SPD_FS | IC_CON_MM,
 	       &i2c_base->ic_con);
@@ -381,12 +370,16 @@ static void __dw_i2c_init(struct i2c_regs *i2c_base, int speed, int slaveaddr)
 	writel(IC_TX_TL, &i2c_base->ic_tx_tl);
 	writel(IC_STOP_DET, &i2c_base->ic_intr_mask);
 #ifndef CONFIG_DM_I2C
-	__dw_i2c_set_bus_speed(i2c_base, NULL, speed);
+	__dw_i2c_set_bus_speed(i2c_base, NULL, speed, IC_CLK);
 	writel(slaveaddr, &i2c_base->ic_sar);
 #endif
 
 	/* Enable i2c */
-	dw_i2c_enable(i2c_base, true);
+	ret = dw_i2c_enable(i2c_base, true);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 #ifndef CONFIG_DM_I2C
@@ -422,7 +415,7 @@ static unsigned int dw_i2c_set_bus_speed(struct i2c_adapter *adap,
 					 unsigned int speed)
 {
 	adap->speed = speed;
-	return __dw_i2c_set_bus_speed(i2c_get_base(adap), NULL, speed);
+	return __dw_i2c_set_bus_speed(i2c_get_base(adap), NULL, speed, IC_CLK);
 }
 
 static void dw_i2c_init(struct i2c_adapter *adap, int speed, int slaveaddr)
@@ -512,8 +505,20 @@ static int designware_i2c_xfer(struct udevice *bus, struct i2c_msg *msg,
 static int designware_i2c_set_bus_speed(struct udevice *bus, unsigned int speed)
 {
 	struct dw_i2c *i2c = dev_get_priv(bus);
+	ulong rate;
 
-	return __dw_i2c_set_bus_speed(i2c->regs, i2c->scl_sda_cfg, speed);
+#if CONFIG_IS_ENABLED(CLK)
+	rate = clk_get_rate(&i2c->clk);
+	if (IS_ERR_VALUE(rate))
+		return -EINVAL;
+
+	/* Convert to MHz */
+	rate /= 1000000;
+#else
+	rate = IC_CLK;
+#endif
+	return __dw_i2c_set_bus_speed(i2c->regs, i2c->scl_sda_cfg, speed,
+				      rate);
 }
 
 static int designware_i2c_probe_chip(struct udevice *bus, uint chip_addr,
@@ -532,61 +537,55 @@ static int designware_i2c_probe_chip(struct udevice *bus, uint chip_addr,
 	return ret;
 }
 
-static int designware_i2c_probe(struct udevice *bus)
+static int designware_i2c_ofdata_to_platdata(struct udevice *bus)
+{
+	struct dw_i2c *priv = dev_get_priv(bus);
+
+	priv->regs = (struct i2c_regs *)devfdt_get_addr_ptr(bus);
+
+	return 0;
+}
+
+int designware_i2c_probe(struct udevice *bus)
 {
 	struct dw_i2c *priv = dev_get_priv(bus);
 	int ret;
 
-	if (device_is_on_pci_bus(bus)) {
-#ifdef CONFIG_DM_PCI
-		/* Save base address from PCI BAR */
-		priv->regs = (struct i2c_regs *)
-			dm_pci_map_bar(bus, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
-#ifdef CONFIG_X86
-		/* Use BayTrail specific timing values */
-		priv->scl_sda_cfg = &byt_config;
-#endif
-#endif
-	} else {
-		priv->regs = (struct i2c_regs *)devfdt_get_addr_ptr(bus);
-	}
-
-	ret = reset_get_by_name(bus, "i2c", &priv->reset_ctl);
+	ret = reset_get_bulk(bus, &priv->resets);
 	if (ret)
-		pr_info("reset_get_by_name() failed: %d\n", ret);
+		dev_warn(bus, "Can't get reset: %d\n", ret);
+	else
+		reset_deassert_bulk(&priv->resets);
 
-	if (&priv->reset_ctl)
-		reset_deassert(&priv->reset_ctl);
+#if CONFIG_IS_ENABLED(CLK)
+	ret = clk_get_by_index(bus, 0, &priv->clk);
+	if (ret)
+		return ret;
 
-	__dw_i2c_init(priv->regs, 0, 0);
-
-	return 0;
-}
-
-static int designware_i2c_bind(struct udevice *dev)
-{
-	static int num_cards;
-	char name[20];
-
-	/* Create a unique device name for PCI type devices */
-	if (device_is_on_pci_bus(dev)) {
-		/*
-		 * ToDo:
-		 * Setting req_seq in the driver is probably not recommended.
-		 * But without a DT alias the number is not configured. And
-		 * using this driver is impossible for PCIe I2C devices.
-		 * This can be removed, once a better (correct) way for this
-		 * is found and implemented.
-		 */
-		dev->req_seq = num_cards;
-		sprintf(name, "i2c_designware#%u", num_cards++);
-		device_set_name(dev, name);
+	ret = clk_enable(&priv->clk);
+	if (ret && ret != -ENOSYS && ret != -ENOTSUPP) {
+		clk_free(&priv->clk);
+		dev_err(bus, "failed to enable clock\n");
+		return ret;
 	}
+#endif
 
-	return 0;
+	return __dw_i2c_init(priv->regs, 0, 0);
 }
 
-static const struct dm_i2c_ops designware_i2c_ops = {
+int designware_i2c_remove(struct udevice *dev)
+{
+	struct dw_i2c *priv = dev_get_priv(dev);
+
+#if CONFIG_IS_ENABLED(CLK)
+	clk_disable(&priv->clk);
+	clk_free(&priv->clk);
+#endif
+
+	return reset_release_bulk(&priv->resets);
+}
+
+const struct dm_i2c_ops designware_i2c_ops = {
 	.xfer		= designware_i2c_xfer,
 	.probe_chip	= designware_i2c_probe_chip,
 	.set_bus_speed	= designware_i2c_set_bus_speed,
@@ -601,26 +600,12 @@ U_BOOT_DRIVER(i2c_designware) = {
 	.name	= "i2c_designware",
 	.id	= UCLASS_I2C,
 	.of_match = designware_i2c_ids,
-	.bind	= designware_i2c_bind,
+	.ofdata_to_platdata = designware_i2c_ofdata_to_platdata,
 	.probe	= designware_i2c_probe,
 	.priv_auto_alloc_size = sizeof(struct dw_i2c),
+	.remove = designware_i2c_remove,
+	.flags	= DM_FLAG_OS_PREPARE,
 	.ops	= &designware_i2c_ops,
 };
-
-#ifdef CONFIG_X86
-static struct pci_device_id designware_pci_supported[] = {
-	/* Intel BayTrail has 7 I2C controller located on the PCI bus */
-	{ PCI_VDEVICE(INTEL, 0x0f41) },
-	{ PCI_VDEVICE(INTEL, 0x0f42) },
-	{ PCI_VDEVICE(INTEL, 0x0f43) },
-	{ PCI_VDEVICE(INTEL, 0x0f44) },
-	{ PCI_VDEVICE(INTEL, 0x0f45) },
-	{ PCI_VDEVICE(INTEL, 0x0f46) },
-	{ PCI_VDEVICE(INTEL, 0x0f47) },
-	{},
-};
-
-U_BOOT_PCI_DEVICE(i2c_designware, designware_pci_supported);
-#endif
 
 #endif /* CONFIG_DM_I2C */

@@ -21,7 +21,6 @@
 #endif
 
 #define CONFIG_REMAKE_ELF
-#define CONFIG_FSL_LAYERSCAPE
 
 #include <asm/arch/stream_id_lsch3.h>
 #include <asm/arch/config.h>
@@ -41,17 +40,10 @@
 #else
 #ifdef CONFIG_QSPI_BOOT
 #define CONFIG_SYS_FSL_QSPI_BASE	0x20000000
-#define CONFIG_ENV_OFFSET		0x300000        /* 3MB */
-#define CONFIG_ENV_ADDR			(CONFIG_SYS_FSL_QSPI_BASE + \
-						CONFIG_ENV_OFFSET)
 #endif
 #endif
 
 #define CONFIG_SKIP_LOWLEVEL_INIT
-
-#if !defined(CONFIG_SD_BOOT)
-#define CONFIG_FSL_DDR_INTERACTIVE	/* Interactive debugging */
-#endif
 
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_SYS_DDR_SDRAM_BASE	0x80000000UL
@@ -72,7 +64,10 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2048 * 1024)
 
 /* I2C */
+#ifndef CONFIG_DM_I2C
 #define CONFIG_SYS_I2C
+#endif
+
 
 /* Serial Port */
 #define CONFIG_SYS_NS16550_SERIAL
@@ -152,7 +147,7 @@ unsigned long long get_qixis_addr(void);
  */
 
 #if defined(CONFIG_FSL_MC_ENET)
-#define CONFIG_SYS_LS_MC_DRAM_BLOCK_MIN_SIZE		(512UL * 1024 * 1024)
+#define CONFIG_SYS_LS_MC_DRAM_BLOCK_MIN_SIZE		(128UL * 1024 * 1024)
 #endif
 /* Command line configuration */
 #define CONFIG_CMD_CACHE
@@ -233,12 +228,11 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SPL_MAX_SIZE            0x16000
 #define CONFIG_SPL_STACK               (CONFIG_SYS_FSL_OCRAM_BASE + 0x9ff0)
 #define CONFIG_SPL_TARGET              "u-boot-with-spl.bin"
-#define CONFIG_SPL_TEXT_BASE           0x1800a000
 
 #define CONFIG_SYS_SPL_MALLOC_SIZE     0x00100000
 #define CONFIG_SYS_SPL_MALLOC_START    0x80200000
 
-#ifdef CONFIG_SECURE_BOOT
+#ifdef CONFIG_NXP_ESBC
 #define CONFIG_U_BOOT_HDR_SIZE		(16 << 10)
 /*
  * HDR would be appended at end of image and copied to DDR along
@@ -249,7 +243,7 @@ unsigned long long get_qixis_addr(void);
 #define CONFIG_SYS_MONITOR_LEN         (0x100000 + CONFIG_U_BOOT_HDR_SIZE)
 #else
 #define CONFIG_SYS_MONITOR_LEN         0x100000
-#endif /* ifdef CONFIG_SECURE_BOOT */
+#endif /* ifdef CONFIG_NXP_ESBC */
 
 #endif
 #define CONFIG_SYS_BOOTM_LEN   (64 << 20)      /* Increase max gunzip size */

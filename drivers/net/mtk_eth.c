@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <cpu_func.h>
 #include <dm.h>
 #include <malloc.h>
 #include <miiphy.h>
@@ -1130,13 +1131,14 @@ static int mtk_eth_ofdata_to_platdata(struct udevice *dev)
 					     &priv->rst_gpio, GPIOD_IS_OUT);
 		}
 	} else {
-		subnode = ofnode_find_subnode(dev_ofnode(dev), "phy-handle");
-		if (!ofnode_valid(subnode)) {
+		ret = dev_read_phandle_with_args(dev, "phy-handle", NULL, 0,
+						 0, &args);
+		if (ret) {
 			printf("error: phy-handle is not specified\n");
 			return ret;
 		}
 
-		priv->phy_addr = ofnode_read_s32_default(subnode, "reg", -1);
+		priv->phy_addr = ofnode_read_s32_default(args.node, "reg", -1);
 		if (priv->phy_addr < 0) {
 			printf("error: phy address is not specified\n");
 			return ret;

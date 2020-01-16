@@ -8,6 +8,8 @@
 
 #include <common.h>
 #include <command.h>
+#include <env.h>
+#include <init.h>
 #include <netdev.h>
 #include <linux/compiler.h>
 #include <asm/mmu.h>
@@ -27,7 +29,7 @@ static uchar ivm_content[CONFIG_SYS_IVM_EEPROM_MAX_LEN];
 
 int checkboard(void)
 {
-	printf("Board: Keymile %s\n", CONFIG_KM_BOARD_NAME);
+	printf("Board: Keymile %s\n", CONFIG_SYS_CONFIG_NAME);
 
 	return 0;
 }
@@ -194,7 +196,8 @@ int misc_init_r(void)
 		}
 	}
 
-	ivm_read_eeprom(ivm_content, CONFIG_SYS_IVM_EEPROM_MAX_LEN);
+	ivm_read_eeprom(ivm_content, CONFIG_SYS_IVM_EEPROM_MAX_LEN,
+			CONFIG_PIGGY_MAC_ADDRESS_OFFSET);
 	return 0;
 }
 

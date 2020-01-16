@@ -23,7 +23,9 @@ char *display_options_get_banner_priv(bool newlines, const char *build_tag,
 				build_tag);
 	if (len > size - 3)
 		len = size - 3;
-	strcpy(buf + len, "\n\n");
+	if (len < 0)
+		len = 0;
+	snprintf(buf + len, size - len, "\n\n");
 
 	return buf;
 }
@@ -203,8 +205,10 @@ int print_buffer(ulong addr, const void *data, uint width, uint count,
 		addr += thislinelen * width;
 		count -= thislinelen;
 
+#ifndef CONFIG_SPL_BUILD
 		if (ctrlc())
 			return -1;
+#endif
 	}
 
 	return 0;

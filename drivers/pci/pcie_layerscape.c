@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2019 NXP
  * Copyright 2014-2015 Freescale Semiconductor, Inc.
  * Layerscape PCIe driver
  */
@@ -339,6 +339,7 @@ static void ls_pcie_setup_ctrl(struct ls_pcie *pcie)
 	dbi_writel(pcie, 0, PCIE_DBI_RO_WR_EN);
 
 	ls_pcie_disable_bars(pcie);
+	pcie->stream_id_cur = 0;
 }
 
 static void ls_pcie_ep_setup_atu(struct ls_pcie *pcie)
@@ -406,7 +407,11 @@ static void ls_pcie_ep_setup_bars(void *bar_base)
 
 static void ls_pcie_ep_enable_cfg(struct ls_pcie *pcie)
 {
-	ctrl_writel(pcie, PCIE_CONFIG_READY, PCIE_PF_CONFIG);
+	u32 config;
+
+	config = ctrl_readl(pcie,  PCIE_PF_CONFIG);
+	config |= PCIE_CONFIG_READY;
+	ctrl_writel(pcie, config, PCIE_PF_CONFIG);
 }
 
 static void ls_pcie_setup_ep(struct ls_pcie *pcie)
