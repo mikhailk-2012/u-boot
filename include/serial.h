@@ -50,18 +50,20 @@ extern void serial_reinit_all(void);
 /* For usbtty */
 #ifdef CONFIG_USB_TTY
 
-extern int usbtty_getc(void);
-extern void usbtty_putc(const char c);
-extern void usbtty_puts(const char *str);
-extern int usbtty_tstc(void);
+struct stdio_dev;
+
+int usbtty_getc(struct stdio_dev *dev);
+void usbtty_putc(struct stdio_dev *dev, const char c);
+void usbtty_puts(struct stdio_dev *dev, const char *str);
+int usbtty_tstc(struct stdio_dev *dev);
 
 #else
 
 /* stubs */
-#define usbtty_getc() 0
-#define usbtty_putc(a)
-#define usbtty_puts(a)
-#define usbtty_tstc() 0
+#define usbtty_getc(dev) 0
+#define usbtty_putc(dev, a)
+#define usbtty_puts(dev, a)
+#define usbtty_tstc(dev) 0
 
 #endif /* CONFIG_USB_TTY */
 
@@ -137,6 +139,7 @@ enum adr_space_type {
  * @reg_width:	size (in bytes) of the IO accesses to the registers
  * @reg_offset:	offset to apply to the @addr from the start of the registers
  * @reg_shift:	quantity to shift the register offsets by
+ * @clock:	UART base clock speed in Hz
  * @baudrate:	baud rate
  */
 struct serial_device_info {
@@ -146,10 +149,12 @@ struct serial_device_info {
 	u8 reg_width;
 	u8 reg_offset;
 	u8 reg_shift;
+	unsigned int clock;
 	unsigned int baudrate;
 };
 
 #define SERIAL_DEFAULT_ADDRESS	0xBADACCE5
+#define SERIAL_DEFAULT_CLOCK	(16 * 115200)
 
 /**
  * struct struct dm_serial_ops - Driver model serial operations
@@ -321,5 +326,24 @@ void ns16550_serial_initialize(void);
 void pl01x_serial_initialize(void);
 void pxa_serial_initialize(void);
 void sh_serial_initialize(void);
+
+/**
+ * serial_printf() - Write a formatted string to the serial console
+ *
+ * The total size of the output must be less than CONFIG_SYS_PBSIZE.
+ *
+ * @fmt: Printf format string, followed by format arguments
+ * @return number of characters written
+ */
+int serial_printf(const char *fmt, ...)
+		__attribute__ ((format (__printf__, 1, 2)));
+
+int serial_init(void);
+void serial_setbrg(void);
+void serial_putc(const char ch);
+void serial_putc_raw(const char ch);
+void serial_puts(const char *str);
+int serial_getc(void);
+int serial_tstc(void);
 
 #endif

@@ -12,8 +12,8 @@
 #include <dm/uclass-internal.h>
 #include <serial.h>
 #include <version.h>
+#include <acpi/acpi_table.h>
 #include <asm/acpi/global_nvs.h>
-#include <asm/acpi_table.h>
 #include <asm/ioapic.h>
 #include <asm/lapic.h>
 #include <asm/mpspec.h>
@@ -109,13 +109,10 @@ static void acpi_add_table(struct acpi_rsdp *rsdp, void *table)
 {
 	int i, entries_num;
 	struct acpi_rsdt *rsdt;
-	struct acpi_xsdt *xsdt = NULL;
+	struct acpi_xsdt *xsdt;
 
 	/* The RSDT is mandatory while the XSDT is not */
 	rsdt = (struct acpi_rsdt *)rsdp->rsdt_address;
-
-	if (rsdp->xsdt_address)
-		xsdt = (struct acpi_xsdt *)((u32)rsdp->xsdt_address);
 
 	/* This should always be MAX_ACPI_TABLES */
 	entries_num = ARRAY_SIZE(rsdt->entry);
@@ -135,30 +132,34 @@ static void acpi_add_table(struct acpi_rsdp *rsdp, void *table)
 
 	/* Fix RSDT length or the kernel will assume invalid entries */
 	rsdt->header.length = sizeof(struct acpi_table_header) +
-				(sizeof(u32) * (i + 1));
+				sizeof(u32) * (i + 1);
 
 	/* Re-calculate checksum */
 	rsdt->header.checksum = 0;
 	rsdt->header.checksum = table_compute_checksum((u8 *)rsdt,
 			rsdt->header.length);
 
+	/* The RSDT is mandatory while the XSDT is not */
+	if (!rsdp->xsdt_address)
+		return;
+
 	/*
 	 * And now the same thing for the XSDT. We use the same index as for
 	 * now we want the XSDT and RSDT to always be in sync in U-Boot
 	 */
-	if (xsdt) {
-		/* Add table to the XSDT */
-		xsdt->entry[i] = (u64)(u32)table;
+	xsdt = (struct acpi_xsdt *)((u32)rsdp->xsdt_address);
 
-		/* Fix XSDT length */
-		xsdt->header.length = sizeof(struct acpi_table_header) +
-			(sizeof(u64) * (i + 1));
+	/* Add table to the XSDT */
+	xsdt->entry[i] = (u64)(u32)table;
 
-		/* Re-calculate checksum */
-		xsdt->header.checksum = 0;
-		xsdt->header.checksum = table_compute_checksum((u8 *)xsdt,
-				xsdt->header.length);
-	}
+	/* Fix XSDT length */
+	xsdt->header.length = sizeof(struct acpi_table_header) +
+				sizeof(u64) * (i + 1);
+
+	/* Re-calculate checksum */
+	xsdt->header.checksum = 0;
+	xsdt->header.checksum = table_compute_checksum((u8 *)xsdt,
+			xsdt->header.length);
 }
 
 static void acpi_create_facs(struct acpi_facs *facs)
@@ -337,6 +338,30 @@ static void acpi_create_mcfg(struct acpi_mcfg *mcfg)
 	header->checksum = table_compute_checksum((void *)mcfg, header->length);
 }
 
+__weak u32 acpi_fill_csrt(u32 current)
+{
+	return current;
+}
+
+static void acpi_create_csrt(struct acpi_csrt *csrt)
+{
+	struct acpi_table_header *header = &(csrt->header);
+	u32 current = (u32)csrt + sizeof(struct acpi_csrt);
+
+	memset((void *)csrt, 0, sizeof(struct acpi_csrt));
+
+	/* Fill out header fields */
+	acpi_fill_header(header, "CSRT");
+	header->length = sizeof(struct acpi_csrt);
+	header->revision = 0;
+
+	current = acpi_fill_csrt(current);
+
+	/* (Re)calculate length and checksum */
+	header->length = current - (u32)csrt;
+	header->checksum = table_compute_checksum((void *)csrt, header->length);
+}
+
 static void acpi_create_spcr(struct acpi_spcr *spcr)
 {
 	struct acpi_table_header *header = &(spcr->header);
@@ -347,7 +372,7 @@ static void acpi_create_spcr(struct acpi_spcr *spcr)
 	uint serial_width;
 	int access_size;
 	int space_id;
-	int ret;
+	int ret = -ENODEV;
 
 	/* Fill out header fields */
 	acpi_fill_header(header, "SPCR");
@@ -355,8 +380,8 @@ static void acpi_create_spcr(struct acpi_spcr *spcr)
 	header->revision = 2;
 
 	/* Read the device once, here. It is reused below */
-	ret = uclass_first_device_err(UCLASS_SERIAL, &dev);
-	if (!ret)
+	dev = gd->cur_serial_dev;
+	if (dev)
 		ret = serial_getinfo(dev, &serial_info);
 	if (ret)
 		serial_info.type = SERIAL_CHIP_UNKNOWN;
@@ -446,6 +471,15 @@ static void acpi_create_spcr(struct acpi_spcr *spcr)
 	spcr->pci_device_id = 0xffff;
 	spcr->pci_vendor_id = 0xffff;
 
+	/*
+	 * SPCR has no clue if the UART base clock speed is different
+	 * to the default one. However, the SPCR 1.04 defines baud rate
+	 * 0 as a preconfigured state of UART and OS is supposed not
+	 * to touch the configuration of the serial device.
+	 */
+	if (serial_info.clock != SERIAL_DEFAULT_CLOCK)
+		spcr->baud_rate = 0;
+
 	/* Fix checksum */
 	header->checksum = table_compute_checksum((void *)spcr, header->length);
 }
@@ -464,6 +498,7 @@ ulong write_acpi_tables(ulong start)
 	struct acpi_fadt *fadt;
 	struct acpi_mcfg *mcfg;
 	struct acpi_madt *madt;
+	struct acpi_csrt *csrt;
 	struct acpi_spcr *spcr;
 	int i;
 
@@ -551,6 +586,13 @@ ulong write_acpi_tables(ulong start)
 	acpi_create_mcfg(mcfg);
 	current += mcfg->header.length;
 	acpi_add_table(rsdp, mcfg);
+	current = ALIGN(current, 16);
+
+	debug("ACPI:    * CSRT\n");
+	csrt = (struct acpi_csrt *)current;
+	acpi_create_csrt(csrt);
+	current += csrt->header.length;
+	acpi_add_table(rsdp, csrt);
 	current = ALIGN(current, 16);
 
 	debug("ACPI:    * SPCR\n");

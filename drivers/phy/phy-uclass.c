@@ -31,20 +31,20 @@ static int generic_phy_xlate_offs_flags(struct phy *phy,
 	return 0;
 }
 
-int generic_phy_get_by_index(struct udevice *dev, int index,
-			     struct phy *phy)
+int generic_phy_get_by_node(ofnode node, int index, struct phy *phy)
 {
 	struct ofnode_phandle_args args;
 	struct phy_ops *ops;
 	struct udevice *phydev;
 	int i, ret;
 
-	debug("%s(dev=%p, index=%d, phy=%p)\n", __func__, dev, index, phy);
+	debug("%s(node=%s, index=%d, phy=%p)\n",
+	      __func__, ofnode_get_name(node), index, phy);
 
 	assert(phy);
 	phy->dev = NULL;
-	ret = dev_read_phandle_with_args(dev, "phys", "#phy-cells", 0, index,
-					 &args);
+	ret = ofnode_parse_phandle_with_args(node, "phys", "#phy-cells", 0,
+					     index, &args);
 	if (ret) {
 		debug("%s: dev_read_phandle_with_args failed: err=%d\n",
 		      __func__, ret);
@@ -90,6 +90,12 @@ err:
 	return ret;
 }
 
+int generic_phy_get_by_index(struct udevice *dev, int index,
+			     struct phy *phy)
+{
+	return generic_phy_get_by_node(dev_ofnode(dev), index, phy);
+}
+
 int generic_phy_get_by_name(struct udevice *dev, const char *phy_name,
 			    struct phy *phy)
 {
@@ -108,35 +114,55 @@ int generic_phy_get_by_name(struct udevice *dev, const char *phy_name,
 
 int generic_phy_init(struct phy *phy)
 {
-	struct phy_ops const *ops = phy_dev_ops(phy->dev);
+	struct phy_ops const *ops;
+
+	if (!phy)
+		return 0;
+	ops = phy_dev_ops(phy->dev);
 
 	return ops->init ? ops->init(phy) : 0;
 }
 
 int generic_phy_reset(struct phy *phy)
 {
-	struct phy_ops const *ops = phy_dev_ops(phy->dev);
+	struct phy_ops const *ops;
+
+	if (!phy)
+		return 0;
+	ops = phy_dev_ops(phy->dev);
 
 	return ops->reset ? ops->reset(phy) : 0;
 }
 
 int generic_phy_exit(struct phy *phy)
 {
-	struct phy_ops const *ops = phy_dev_ops(phy->dev);
+	struct phy_ops const *ops;
+
+	if (!phy)
+		return 0;
+	ops = phy_dev_ops(phy->dev);
 
 	return ops->exit ? ops->exit(phy) : 0;
 }
 
 int generic_phy_power_on(struct phy *phy)
 {
-	struct phy_ops const *ops = phy_dev_ops(phy->dev);
+	struct phy_ops const *ops;
+
+	if (!phy)
+		return 0;
+	ops = phy_dev_ops(phy->dev);
 
 	return ops->power_on ? ops->power_on(phy) : 0;
 }
 
 int generic_phy_power_off(struct phy *phy)
 {
-	struct phy_ops const *ops = phy_dev_ops(phy->dev);
+	struct phy_ops const *ops;
+
+	if (!phy)
+		return 0;
+	ops = phy_dev_ops(phy->dev);
 
 	return ops->power_off ? ops->power_off(phy) : 0;
 }

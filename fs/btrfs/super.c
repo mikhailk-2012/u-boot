@@ -7,6 +7,7 @@
 
 #include "btrfs.h"
 #include <memalign.h>
+#include <linux/compat.h>
 
 #define BTRFS_SUPER_FLAG_SUPP	(BTRFS_HEADER_FLAG_WRITTEN	\
 				 | BTRFS_HEADER_FLAG_RELOC	\
@@ -198,17 +199,16 @@ int btrfs_read_superblock(void)
 			break;
 
 		if (btrfs_check_super_csum(raw_sb)) {
-			printf("%s: invalid checksum at superblock mirror %i\n",
-			       __func__, i);
+			debug("%s: invalid checksum at superblock mirror %i\n",
+			      __func__, i);
 			continue;
 		}
 
 		btrfs_super_block_to_cpu(sb);
 
 		if (sb->magic != BTRFS_MAGIC) {
-			printf("%s: invalid BTRFS magic 0x%016llX at "
-			       "superblock mirror %i\n", __func__, sb->magic,
-			       i);
+			debug("%s: invalid BTRFS magic 0x%016llX at "
+			      "superblock mirror %i\n", __func__, sb->magic, i);
 		} else if (sb->bytenr != superblock_offsets[i]) {
 			printf("%s: invalid bytenr 0x%016llX (expected "
 			       "0x%016llX) at superblock mirror %i\n",
@@ -224,12 +224,19 @@ int btrfs_read_superblock(void)
 	}
 
 	if (!btrfs_info.sb.generation) {
-		printf("%s: No valid BTRFS superblock found!\n", __func__);
+		debug("%s: No valid BTRFS superblock found!\n", __func__);
 		return -1;
 	}
 
 	if (btrfs_check_super_roots(&btrfs_info.sb)) {
 		printf("%s: No valid root_backup found!\n", __func__);
+		return -1;
+	}
+
+	if (sb->sectorsize != PAGE_SIZE) {
+		printf(
+	"%s: Unsupported sector size (%u), only supports %u as sector size\n",
+			__func__, sb->sectorsize, PAGE_SIZE);
 		return -1;
 	}
 

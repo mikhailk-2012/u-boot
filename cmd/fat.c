@@ -8,13 +8,7 @@
  * Boot support
  */
 #include <common.h>
-#include <command.h>
-#include <s_record.h>
-#include <net.h>
-#include <ata.h>
-#include <asm/io.h>
 #include <mapmem.h>
-#include <part.h>
 #include <fat.h>
 #include <fs.h>
 
@@ -31,7 +25,7 @@ U_BOOT_CMD(
 	"      and determine its size."
 );
 
-int do_fat_fsload (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_fat_fsload(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	return do_load(cmdtp, flag, argc, argv, FS_TYPE_FAT);
 }

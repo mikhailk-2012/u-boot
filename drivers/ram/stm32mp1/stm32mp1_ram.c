@@ -6,6 +6,7 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
+#include <init.h>
 #include <ram.h>
 #include <regmap.h>
 #include <syscon.h>
@@ -20,13 +21,13 @@ static const char *const clkname[] = {
 	"ddrphyc" /* LAST clock => used for get_rate() */
 };
 
-int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint16_t mem_speed)
+int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint32_t mem_speed)
 {
 	unsigned long ddrphy_clk;
 	unsigned long ddr_clk;
 	struct clk clk;
 	int ret;
-	int idx;
+	unsigned int idx;
 
 	for (idx = 0; idx < ARRAY_SIZE(clkname); idx++) {
 		ret = clk_get_by_name(priv->dev, clkname[idx], &clk);
@@ -43,13 +44,13 @@ int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint16_t mem_speed)
 	priv->clk = clk;
 	ddrphy_clk = clk_get_rate(&priv->clk);
 
-	debug("DDR: mem_speed (%d MHz), RCC %d MHz\n",
-	      mem_speed, (u32)(ddrphy_clk / 1000 / 1000));
+	debug("DDR: mem_speed (%d kHz), RCC %d kHz\n",
+	      mem_speed, (u32)(ddrphy_clk / 1000));
 	/* max 10% frequency delta */
-	ddr_clk = abs(ddrphy_clk - mem_speed * 1000 * 1000);
-	if (ddr_clk > (mem_speed * 1000 * 100)) {
-		pr_err("DDR expected freq %d MHz, current is %d MHz\n",
-		       mem_speed, (u32)(ddrphy_clk / 1000 / 1000));
+	ddr_clk = abs(ddrphy_clk - mem_speed * 1000);
+	if (ddr_clk > (mem_speed * 100)) {
+		pr_err("DDR expected freq %d kHz, current is %d kHz\n",
+		       mem_speed, (u32)(ddrphy_clk / 1000));
 		return -EINVAL;
 	}
 
@@ -59,22 +60,27 @@ int stm32mp1_ddr_clk_enable(struct ddr_info *priv, uint16_t mem_speed)
 static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 {
 	struct ddr_info *priv = dev_get_priv(dev);
-	int ret, idx;
+	int ret;
+	unsigned int idx;
 	struct clk axidcg;
 	struct stm32mp1_ddr_config config;
 
-#define PARAM(x, y) \
-	{ x,\
-	  offsetof(struct stm32mp1_ddr_config, y),\
-	  sizeof(config.y) / sizeof(u32)}
+#define PARAM(x, y, z)							\
+	{	.name = x,						\
+		.offset = offsetof(struct stm32mp1_ddr_config, y),	\
+		.size = sizeof(config.y) / sizeof(u32),			\
+		.present = z,						\
+	}
 
-#define CTL_PARAM(x) PARAM("st,ctl-"#x, c_##x)
-#define PHY_PARAM(x) PARAM("st,phy-"#x, p_##x)
+#define CTL_PARAM(x) PARAM("st,ctl-"#x, c_##x, NULL)
+#define PHY_PARAM(x) PARAM("st,phy-"#x, p_##x, NULL)
+#define PHY_PARAM_OPT(x) PARAM("st,phy-"#x, p_##x, &config.p_##x##_present)
 
 	const struct {
 		const char *name; /* name in DT */
 		const u32 offset; /* offset in config struct */
 		const u32 size;   /* size of parameters */
+		bool * const present;  /* presence indication for opt */
 	} param[] = {
 		CTL_PARAM(reg),
 		CTL_PARAM(timing),
@@ -82,7 +88,7 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 		CTL_PARAM(perf),
 		PHY_PARAM(reg),
 		PHY_PARAM(timing),
-		PHY_PARAM(cal)
+		PHY_PARAM_OPT(cal)
 	};
 
 	config.info.speed = dev_read_u32_default(dev, "st,mem-speed", 0);
@@ -101,10 +107,24 @@ static __maybe_unused int stm32mp1_ddr_setup(struct udevice *dev)
 					 param[idx].size);
 		debug("%s: %s[0x%x] = %d\n", __func__,
 		      param[idx].name, param[idx].size, ret);
-		if (ret) {
-			pr_err("%s: Cannot read %s\n",
-			       __func__, param[idx].name);
+		if (ret &&
+		    (ret != -FDT_ERR_NOTFOUND || !param[idx].present)) {
+			pr_err("%s: Cannot read %s, error=%d\n",
+			       __func__, param[idx].name, ret);
 			return -EINVAL;
+		}
+		if (param[idx].present) {
+			/* save presence of optional parameters */
+			*param[idx].present = true;
+			if (ret == -FDT_ERR_NOTFOUND) {
+				*param[idx].present = false;
+#ifdef CONFIG_STM32MP1_DDR_INTERACTIVE
+				/* reset values if used later */
+				memset((void *)((u32)&config +
+						param[idx].offset),
+					0, param[idx].size * sizeof(u32));
+#endif
+			}
 		}
 	}
 
@@ -157,7 +177,8 @@ static int stm32mp1_ddr_probe(struct udevice *dev)
 
 	priv->info.base = STM32_DDR_BASE;
 
-#if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
+#if !defined(CONFIG_TFABOOT) && \
+	(!defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD))
 	priv->info.size = 0;
 	return stm32mp1_ddr_setup(dev);
 #else

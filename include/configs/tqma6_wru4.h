@@ -17,7 +17,6 @@
 #define CONSOLE_DEV		"ttymxc3"
 
 /* Watchdog */
-#define CONFIG_WATCHDOG_TIMEOUT_MSECS	60000
 
 /* Config on-board RTC */
 #define CONFIG_RTC_DS1337
@@ -30,5 +29,8 @@
 
 /* Bootcounter */
 #define CONFIG_SYS_BOOTCOUNT_BE
+
+/* I2C */
+#define CONFIG_SYS_I2C
 
 #endif /* __CONFIG_TQMA6_WRU4_H */

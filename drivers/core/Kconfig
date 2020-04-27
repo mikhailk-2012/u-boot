@@ -92,7 +92,7 @@ config DM_SEQ_ALIAS
 
 config SPL_DM_SEQ_ALIAS
 	bool "Support numbered aliases in device tree in SPL"
-	depends on DM
+	depends on SPL_DM
 	default n
 	help
 	  Most boards will have a '/aliases' node containing the path to
@@ -225,6 +225,15 @@ config SPL_OF_TRANSLATE
 	  used for the address translation. This function is faster and
 	  smaller in size than fdt_translate_address().
 
+config TRANSLATION_OFFSET
+	bool "Platforms specific translation offset"
+	depends on DM && OF_CONTROL
+	help
+	  Some platforms need a special address translation. Those
+	  platforms (e.g. mvebu in SPL) can configure a translation
+	  offset by enabling this option and setting the translation_offset
+	  variable in the GD in their platform- / board-specific code.
+
 config OF_ISA_BUS
 	bool
 	depends on OF_TRANSLATE
@@ -251,5 +260,14 @@ config OF_ISA_BUS
 config DM_DEV_READ_INLINE
 	bool
 	default y if !OF_LIVE
+
+config ACPIGEN
+	bool "Support ACPI table generation in driver model"
+	default y if SANDBOX || GENERATE_ACPI_TABLE
+	help
+	  This option enables generation of ACPI tables using driver-model
+	  devices. It adds a new operation struct to each driver, to support
+	  things like generating device-specific tables and returning the ACPI
+	  name of a device.
 
 endmenu

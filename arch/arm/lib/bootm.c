@@ -13,8 +13,11 @@
 
 #include <common.h>
 #include <command.h>
+#include <cpu_func.h>
 #include <dm.h>
+#include <hang.h>
 #include <dm/root.h>
+#include <env.h>
 #include <image.h>
 #include <u-boot/zlib.h>
 #include <asm/byteorder.h>
@@ -72,6 +75,9 @@ void arch_lmb_reserve(struct lmb *lmb)
 			gd->bd->bi_dram[bank].size - 1;
 		if (sp > bank_end)
 			continue;
+		if (bank_end > gd->ram_top)
+			bank_end = gd->ram_top - 1;
+
 		lmb_reserve(lmb, sp, bank_end - sp + 1);
 		break;
 	}
@@ -88,8 +94,6 @@ __weak void board_quiesce_devices(void)
  */
 static void announce_and_cleanup(int fake)
 {
-	printf("\nStarting kernel ...%s\n\n", fake ?
-		"(fake run for tracing)" : "");
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_HANDOFF, "start_kernel");
 #ifdef CONFIG_BOOTSTAGE_FDT
 	bootstage_fdt_add_report();
@@ -104,6 +108,8 @@ static void announce_and_cleanup(int fake)
 
 	board_quiesce_devices();
 
+	printf("\nStarting kernel ...%s\n\n", fake ?
+		"(fake run for tracing)" : "");
 	/*
 	 * Call remove function of all devices with a removal flag set.
 	 * This may be useful for last-stage operations, like cancelling
@@ -223,6 +229,8 @@ static void do_nonsec_virt_switch(void)
 }
 #endif
 
+__weak void board_prep_linux(bootm_headers_t *images) { }
+
 /* Subcommand: PREP */
 static void boot_prep_linux(bootm_headers_t *images)
 {
@@ -269,6 +277,8 @@ static void boot_prep_linux(bootm_headers_t *images)
 		printf("FDT and ATAGS support not compiled in - hanging\n");
 		hang();
 	}
+
+	board_prep_linux(images);
 }
 
 __weak bool armv7_boot_nonsec_default(void)

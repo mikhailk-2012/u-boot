@@ -9,17 +9,14 @@
 #include <common.h>
 #include <autoboot.h>
 #include <cli.h>
+#include <command.h>
 #include <console.h>
+#include <env.h>
+#include <init.h>
 #include <version.h>
-
-/*
- * Board-specific Platform code can reimplement show_boot_progress () if needed
- */
-__weak void show_boot_progress(int val) {}
 
 static void run_preboot_environment_command(void)
 {
-#ifdef CONFIG_PREBOOT
 	char *p;
 
 	p = env_get("preboot");
@@ -34,7 +31,6 @@ static void run_preboot_environment_command(void)
 		if (IS_ENABLED(CONFIG_AUTOBOOT_KEYED))
 			disable_ctrlc(prev);	/* restore Ctrl-C checking */
 	}
-#endif /* CONFIG_PREBOOT */
 }
 
 /* We come here after U-Boot is initialised and ready to process commands */
@@ -49,7 +45,8 @@ void main_loop(void)
 
 	cli_init();
 
-	run_preboot_environment_command();
+	if (IS_ENABLED(CONFIG_USE_PREBOOT))
+		run_preboot_environment_command();
 
 	if (IS_ENABLED(CONFIG_UPDATE_TFTP))
 		update_tftp(0UL, NULL, NULL);
