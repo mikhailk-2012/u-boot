@@ -1,0 +1,421 @@
+/*
+ * Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/dts-v1/;
+#include "sun8i-r40.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	model = "Forlinx OKA40i-C";
+	compatible = "forlinx,oka40i", "allwinner,sun8i-r40";
+
+	aliases {
+		ethernet0 = &gmac;
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+	
+	reg_usb0_pwr: usb0_pwr {
+		compatible = "regulator-fixed";
+		regulator-name = "usb0_pwr";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&pio 8 13 GPIO_ACTIVE_HIGH>; /* PI13 */
+		enable-active-high;
+	};
+	
+	reg_usb2_drv: usb2_drv  {
+		compatible = "regulator-fixed";
+		regulator-name = "usb2_drv";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&pio 7 22 GPIO_ACTIVE_HIGH>; /* PH22 */
+		enable-active-high;		
+	};
+	
+	reg_usb1_drv: usb1_drv {
+		compatible = "regulator-fixed";
+		regulator-name = "usb1_drv";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&pio 1 12 GPIO_ACTIVE_HIGH>; /* PB12 */
+		enable-active-high;		
+	};
+	
+	leds {
+		compatible = "gpio-leds";
+		
+		user-led5-green {
+			label = "oka40i:led5:green";
+			gpios = <&pio 7 26 GPIO_ACTIVE_LOW>; /*PH26-led5*/			
+		};
+
+		user-led6-blue {
+			label = "oka40i:led6:blue";
+			gpios = <&pio 8 15 GPIO_ACTIVE_LOW>; /*PI15-led6*/
+		};
+	};
+
+};
+
+
+&ahci {
+	ahci-supply = <&reg_dldo4>;
+	phy-supply = <&reg_eldo2>; 
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&tcon_tv0 {
+	status = "okay";
+ }; 
+ 
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pb_pins>;
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+
+	axp22x: pmic@68 {
+		compatible = "x-powers,axp221";
+		reg = <0x34>;
+		interrupt-parent = <&nmi_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+#include "axp22x.dtsi"
+
+&reg_dcdc1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-3v3";
+};
+
+&reg_dcdc2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "vcc-cpu";
+};
+
+&reg_dcdc3 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "vdd-sys";
+};
+
+&reg_dcdc4 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "dcdc4";
+};
+
+&reg_dcdc5 {
+	regulator-always-on;
+	/* ddr3 Supply voltage operating range */
+	regulator-min-microvolt = <1425000>;
+	regulator-max-microvolt = <1575000>;
+	regulator-name = "vcc-dram";
+};
+
+/* vcc-tvin vcc-25 */
+&reg_aldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3240000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-tvin";
+};
+
+/* vcc-pc vcc-emmcvq18 */
+&reg_aldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1620000>;
+	regulator-max-microvolt = <198000>;
+	regulator-name = "vcc-emmcvq18";
+};
+
+&reg_aldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <2900000>;
+	regulator-max-microvolt = <3100000>;
+	regulator-name = "avcc";
+};
+
+/* vcc-io-wifi vcc-pg */
+&reg_dldo1 {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi-io-vcc-pg";
+};
+
+&reg_dldo2 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi";
+};
+
+&reg_dldo3 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "wlan-power-ext";
+};
+
+/* vcc-sata-25 vcc-pf */
+&reg_dldo4 {
+	regulator-min-microvolt = <2250000>;
+	regulator-max-microvolt = <2750000>;
+	regulator-name = "vcc-sata25-vcc-pf";
+};
+
+&reg_eldo1 {
+	regulator-min-microvolt = <2520000>;
+	regulator-max-microvolt = <3080000>;
+	regulator-name = "isp-dvdd";
+};
+
+/* vcc-sata-12 */
+&reg_eldo2 {
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1200000>;
+	regulator-name = "vcc-sata12";
+};
+
+&reg_eldo3 {
+	regulator-min-microvolt = <2520000>;
+	regulator-max-microvolt = <3080000>;
+	regulator-name = "vcc-pe";
+};
+
+&reg_ldo_io0 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-ctp";
+	status = "okay";
+};
+
+&reg_ldo_io1 {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vcc-i2s-18";
+	status = "okay";
+};
+
+&reg_dc1sw {
+	regulator-name = "vcc-lcd";
+};
+
+&ac_power_supply {
+	status = "okay";
+};
+
+
+
+&pio {
+	pinctrl-names = "default";
+	pinctrl-0 = <&clk_out_a_pin>;
+	
+	vcc-pa-supply = <&reg_dcdc1>;
+	vcc-pc-supply = <&reg_aldo2>;
+	vcc-pd-supply = <&reg_dcdc1>;	
+	vcc-pe-supply = <&reg_eldo3>;	
+	vcc-pf-supply = <&reg_dldo4>;
+	vcc-pg-supply = <&reg_dldo1>; 
+	 
+	mmc0_cd_pin_oka40i: mmc0_cd_pin_oka40i@0 {
+		pins = "PI11";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	
+	mmc3_pi_pins: mmc3_pi_pins@0 {
+		pins = "PI4", "PI5", "PI6", "PI7",
+				"PI8", "PI9";
+		function = "mmc3";
+		drive-strength = <30>;
+		bias-pull-up;	
+	};
+	mmc3_cd_pin_oka40i: mmc3_cd_pin_oka40i@0 {
+		pins = "PI10";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	
+	usb0_id_detect_pin: usb0_id_detect_pin@0 {
+		pins = "PH21";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	usb0_vbus_detect_pin: usb0_vbus_detect_pin@0 {
+		pins = "PH17";
+		function = "gpio_in";
+	};
+	
+	gmac_pins_mii_a: gmac_pins_mii_a@0 {
+		pins = "PA0", "PA1", "PA2",
+		       "PA3", "PA4", "PA5", "PA6",
+		       "PA7", "PA8", "PA9", "PA10",
+		       "PA11", "PA12", "PA13", "PA14",
+		       "PA15", "PA16", "PA17";
+		function = "gmac";
+		drive-strength = <30>;
+	};
+};
+
+&gmac {
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac_pins_mii_a>;
+	phy-handle = <&phy1>;
+	phy-mode = "mii";
+	phy-supply = <&reg_dcdc1>;
+	status = "okay";
+};
+&gmac_mdio {
+	phy1: ethernet-phy@1 {
+		compatible = "ethernet-phy-ieee802.3-c22";
+		reg = <1>;
+		max-speed = <100>;
+		/* PH22 doesnt work! wrong pin ? */
+		//reset-gpios = <&pio 7 22 GPIO_ACTIVE_HIGH>; /* PH22 */
+		//reset-assert-us = <2500>;
+		//reset-deassert-us = <25000>;
+	};
+};
+
+/* mmc0 card detect - ball V24 : gpio PI11 */
+&mmc0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc0_pins>, <&mmc0_cd_pin_oka40i>;
+	vmmc-supply = <&reg_dcdc1>;
+	bus-width = <4>;
+	cd-gpios = <&pio 8 11 GPIO_ACTIVE_HIGH>; 
+	cd-inverted;
+	no-1-8-v;
+	status = "okay";
+};
+
+&mmc2 { 
+	vmmc-supply = <&reg_dcdc1>;
+	vqmmc-supply = <&reg_aldo2>;
+	bus-width = <8>;
+	non-removable;
+	cap-mmc-hw-reset;	
+	status = "okay";
+	
+	emmc: emmc@0 {
+		reg = <0>;
+		compatible = "mmc-card";
+	};
+};
+
+/* mmc3 card detect -  ball V23 gpio PI10 */
+&mmc3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc3_pi_pins>, <&mmc3_cd_pin_oka40i>;
+	vmmc-supply = <&reg_dcdc1>;
+	bus-width = <4>;
+	cd-gpios = <&pio 8 10 GPIO_ACTIVE_HIGH>;
+	cd-inverted;
+	no-1-8-v; 
+	status = "okay";
+};
+
+
+
+/* USB2514B 4-port USB 2.0 hub here */
+/* P32=port1, P34=port2, miniPCIe=port3, WiFi/BT=port4 */
+
+&ehci1 {
+	status = "okay";
+};
+
+/* P33 connector */
+&ehci2 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&ohci2 {
+	status = "okay";
+};
+
+
+
+
+
+&usb_power_supply {
+	status = "okay";
+};
+
+&usbphy {
+	usb1_vbus-supply = <&reg_usb2_drv>;
+	//usb2_vbus-supply = <&reg_usb2_drv>;
+
+
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb0_id_detect_pin>, <&usb0_vbus_detect_pin>;
+	
+	usb0_id_det-gpio = <&pio 7 21 GPIO_ACTIVE_HIGH>; /* PH21 */
+	usb0_vbus_det-gpios = <&pio 7 17 GPIO_ACTIVE_HIGH>; /* PH17 */
+	usb0_vbus-supply = <&reg_usb0_pwr>;
+	
+	/*usb1_vbus-supply = <&reg_vcc5v0>;*/
+	//usb0_vbus_power-supply = <&usb_power_supply>;
+	status = "okay";
+};
