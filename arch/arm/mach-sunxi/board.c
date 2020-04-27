@@ -259,14 +259,36 @@ u32 spl_boot_device(void)
 	return sunxi_get_boot_device();
 }
 
+static void enable_jtag_pb(void)
+{
+	/* PB 15, 14, 16, 17 */
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(14), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(15), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(16), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(17), 3);
+}
+
 void board_init_f(ulong dummy)
 {
+	volatile unsigned long jtag_continue;
+	unsigned int jtag_cnt;
 	spl_init();
 	preloader_console_init();
 
 #ifdef CONFIG_SPL_I2C_SUPPORT
 	/* Needed early by sunxi_board_init if PMU is enabled */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+#endif
+#if 0
+	puts("jtag loop\n");
+	enable_jtag_pb();
+	jtag_continue=0;
+	jtag_cnt =0;
+	while (jtag_continue==0) {
+		if ((++jtag_cnt & 0xffff)==0)
+			puts(".");
+	}
+	puts("\n");
 #endif
 	sunxi_board_init();
 }
