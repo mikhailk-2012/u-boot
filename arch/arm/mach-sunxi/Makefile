@@ -34,9 +34,17 @@ obj-$(CONFIG_DRAM_SUN6I)	+= dram_sun6i.o
 obj-$(CONFIG_DRAM_SUN8I_A23)	+= dram_sun8i_a23.o
 obj-$(CONFIG_DRAM_SUN8I_A33)	+= dram_sun8i_a33.o
 obj-$(CONFIG_DRAM_SUN8I_A83T)	+= dram_sun8i_a83t.o
+ifdef CONFIG_DRAM_SUN8I_R40_HAL
+obj-y				+= dram_sun8i_r40.o
+obj-y				+= dram_sun8i_r40/
+endif
+ifdef CONFIG_DRAM_SUN8I_R40_AWLIB
+obj-y				+= dram_sun8i_r40.o
+endif
 obj-$(CONFIG_DRAM_SUN9I)	+= dram_sun9i.o
 obj-$(CONFIG_SPL_SPI_SUNXI)	+= spl_spi_sunxi.o
 obj-$(CONFIG_SUNXI_DRAM_DW)	+= dram_sunxi_dw.o
 obj-$(CONFIG_SUNXI_DRAM_DW)	+= dram_timings/
 obj-$(CONFIG_DRAM_SUN50I_H6)	+= dram_sun50i_h6.o
+obj-$(CONFIG_DRAM_SUN50I_H6)	+= dram_timings/
 endif
