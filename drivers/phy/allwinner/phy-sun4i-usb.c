@@ -224,9 +224,12 @@ static int sun4i_usb_phy_power_on(struct phy *phy)
 	if (usb_phy->power_on_count != 1)
 		return 0;
 
-	if (usb_phy->gpio_vbus >= 0)
+	if (usb_phy->gpio_vbus >= 0) {
+		debug("%s gpio_vbus= %d\n", __func__, usb_phy->gpio_vbus);
 		gpio_set_value(usb_phy->gpio_vbus, SUNXI_GPIO_PULL_UP);
 
+	}
+	mdelay(10);
 	return 0;
 }
 
@@ -239,9 +242,11 @@ static int sun4i_usb_phy_power_off(struct phy *phy)
 	if (usb_phy->power_on_count != 0)
 		return 0;
 
-	if (usb_phy->gpio_vbus >= 0)
+	if (usb_phy->gpio_vbus >= 0) {
+		debug("%s gpio_vbus= %d\n", __func__, usb_phy->gpio_vbus);
 		gpio_set_value(usb_phy->gpio_vbus, SUNXI_GPIO_PULL_DISABLE);
-
+	}
+	mdelay(10);
 	return 0;
 }
 
@@ -309,7 +314,13 @@ static int sun4i_usb_phy_init(struct phy *phy)
 
 	sun4i_usb_phy_passby(phy, true);
 
-	sun4i_usb_phy0_reroute(data, true);
+	sun4i_usb_phy0_reroute(data,
+#if defined(CONFIG_USB_MUSB_HOST) || defined(CONFIG_USB_MUSB_GADGET)
+			true	/* phy0 route to MUSB */
+#else
+			false	/* phy0 route to *HCI0 */
+#endif
+			);
 
 	return 0;
 }
@@ -372,8 +383,6 @@ int sun4i_usb_phy_vbus_detect(struct phy *phy)
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
 	int err, retries = 3;
 
-	debug("%s: id_det = %d\n", __func__, usb_phy->gpio_id_det);
-
 	if (usb_phy->gpio_vbus_det < 0)
 		return usb_phy->gpio_vbus_det;
 
@@ -387,7 +396,8 @@ int sun4i_usb_phy_vbus_detect(struct phy *phy)
 		mdelay(100);
 		err = gpio_get_value(usb_phy->gpio_vbus_det);
 	}
-
+	debug("%s: vbus_det = %d state = %d\n", __func__,
+			usb_phy->gpio_vbus_det, err);
 	return err;
 }
 
@@ -395,13 +405,15 @@ int sun4i_usb_phy_id_detect(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
 	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
-
-	debug("%s: id_det = %d\n", __func__, usb_phy->gpio_id_det);
+	int id_val;
 
 	if (usb_phy->gpio_id_det < 0)
 		return usb_phy->gpio_id_det;
 
-	return gpio_get_value(usb_phy->gpio_id_det);
+	id_val = gpio_get_value(usb_phy->gpio_id_det);
+	debug("%s: id_det = %d state = %d\n", __func__,
+			usb_phy->gpio_id_det, id_val);
+	return id_val;
 }
 
 void sun4i_usb_phy_set_squelch_detect(struct phy *phy, bool enabled)
@@ -448,6 +460,8 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			ret = gpio_direction_output(phy->gpio_vbus, 0);
 			if (ret)
 				return ret;
+			sunxi_gpio_set_drv(phy->gpio_vbus, 3);
+			debug("[usb_phy%d] gpio_vbus %d\n", i, phy->gpio_vbus);
 		}
 
 		phy->gpio_vbus_det = sunxi_name_to_gpio(info->gpio_vbus_det);
@@ -458,6 +472,7 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			ret = gpio_direction_input(phy->gpio_vbus_det);
 			if (ret)
 				return ret;
+			debug("[usb_phy%d] gpio_vbus_det %d\n", i, phy->gpio_vbus_det);
 		}
 
 		phy->gpio_id_det = sunxi_name_to_gpio(info->gpio_id_det);
@@ -469,6 +484,7 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			if (ret)
 				return ret;
 			sunxi_gpio_set_pull(phy->gpio_id_det, SUNXI_GPIO_PULL_UP);
+			debug("[usb_phy%d] gpio_id_det %d\n", i, phy->gpio_id_det);
 		}
 
 		if (data->cfg->dedicated_clocks)

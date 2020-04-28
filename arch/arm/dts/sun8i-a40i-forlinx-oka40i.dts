@@ -255,6 +255,7 @@
 
 &reg_dc1sw {
 	regulator-name = "vcc-lcd";
+	status = "okay";
 };
 
 &ac_power_supply {
@@ -302,7 +303,7 @@
 		pins = "PH17";
 		function = "gpio_in";
 	};
-	
+
 	gmac_pins_mii_a: gmac_pins_mii_a@0 {
 		pins = "PA0", "PA1", "PA2",
 		       "PA3", "PA4", "PA5", "PA6",
@@ -373,6 +374,13 @@
 };
 
 
+&ehci0 {
+	status = "okay";
+};
+&ohci0 {
+	status = "okay";
+};
+
 
 /* USB2514B 4-port USB 2.0 hub here */
 /* P32=port1, P34=port2, miniPCIe=port3, WiFi/BT=port4 */
@@ -394,19 +402,13 @@
 	status = "okay";
 };
 
-
-
-
-
 &usb_power_supply {
 	status = "okay";
 };
 
 &usbphy {
-	usb1_vbus-supply = <&reg_usb2_drv>;
-	//usb2_vbus-supply = <&reg_usb2_drv>;
-
-
+	usb1_vbus-supply = <&reg_usb1_drv>;
+	usb2_vbus-supply = <&reg_usb2_drv>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&usb0_id_detect_pin>, <&usb0_vbus_detect_pin>;
@@ -414,8 +416,9 @@
 	usb0_id_det-gpio = <&pio 7 21 GPIO_ACTIVE_HIGH>; /* PH21 */
 	usb0_vbus_det-gpios = <&pio 7 17 GPIO_ACTIVE_HIGH>; /* PH17 */
 	usb0_vbus-supply = <&reg_usb0_pwr>;
+	usb0_vbus_power-supply = <&usb_power_supply>;
 	
 	/*usb1_vbus-supply = <&reg_vcc5v0>;*/
-	//usb0_vbus_power-supply = <&usb_power_supply>;
+	
 	status = "okay";
 };
