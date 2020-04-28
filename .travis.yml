@@ -10,9 +10,10 @@ language: c
 
 addons:
   apt:
+    update: true
     sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-bionic-7
+    - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+      key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
     - autopoint
     - cppcheck
@@ -38,7 +39,7 @@ addons:
     - liblz4-tool
     - lzma-alone
     - libisl15
-    - clang-7
+    - clang-10
     - srecord
     - graphviz
     - coreutils
@@ -57,7 +58,7 @@ install:
  - ln -s travis-ci /tmp/uboot-test-hooks/py/`hostname`
  # prepare buildman environment
  - echo -e "[toolchain]\nroot = /usr" > ~/.buildman
- - echo -e "arc = /tmp/arc_gnu_2018.09_prebuilt_uclibc_le_archs_linux_install" >> ~/.buildman
+ - echo -e "arc = /tmp/arc_gnu_2019.09_prebuilt_uclibc_le_archs_linux_install" >> ~/.buildman
  - echo -e "\n[toolchain-alias]\nsh = sh2" >> ~/.buildman
  - echo -e "x86 = i386" >> ~/.buildman;
  - echo -e "riscv = riscv64" >> ~/.buildman;
@@ -86,8 +87,8 @@ before_script:
       ./tools/buildman/buildman --fetch-arch i386;
     fi
   - if [[ "${TOOLCHAIN}" == arc ]]; then
-       wget https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases/download/arc-2018.09-release/arc_gnu_2018.09_prebuilt_uclibc_le_archs_linux_install.tar.gz &&
-       tar -C /tmp -xf arc_gnu_2018.09_prebuilt_uclibc_le_archs_linux_install.tar.gz;
+       wget https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases/download/arc-2019.09-release/arc_gnu_2019.09_prebuilt_uclibc_le_archs_linux_install.tar.gz &&
+       tar -C /tmp -xf arc_gnu_2019.09_prebuilt_uclibc_le_archs_linux_install.tar.gz;
     fi
   - if [[ "${TOOLCHAIN}" == "nds32" ]]; then
        wget https://github.com/vincentzwc/prebuilt-nds32-toolchain/releases/download/20180521/nds32le-linux-glibc-v3-upstream.tar.gz &&
@@ -499,7 +500,7 @@ matrix:
     - name: "test/py sandbox with clang"
       env:
         - TEST_PY_BD="sandbox"
-          OVERRIDE="-O clang-7"
+          OVERRIDE="-O clang-10"
     - name: "test/py sandbox_spl"
       env:
         - TEST_PY_BD="sandbox_spl"

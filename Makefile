@@ -512,7 +512,7 @@ dt_h := include/generated/dt.h
 
 no-dot-config-targets := clean clobber mrproper distclean \
 			 help %docs check% coccicheck \
-			 ubootversion backup tests check qcheck
+			 ubootversion backup tests check qcheck tcheck
 
 config-targets := 0
 mixed-targets  := 0
@@ -1002,6 +1002,9 @@ append = cat $(filter-out $< $(PHONY), $^) >> $@
 quiet_cmd_pad_cat = CAT     $@
 cmd_pad_cat = $(cmd_objcopy) && $(append) || rm -f $@
 
+quiet_cmd_lzma = LZMA    $@
+cmd_lzma = lzma -c -z -k -9 $< > $@
+
 cfg: u-boot.cfg
 
 quiet_cmd_cfgcheck = CFGCHK  $2
@@ -1322,7 +1325,9 @@ endif
 # Boards with more complex image requirements can provide an .its source file
 # or a generator script
 ifneq ($(CONFIG_SPL_FIT_SOURCE),"")
-U_BOOT_ITS = $(subst ",,$(CONFIG_SPL_FIT_SOURCE))
+U_BOOT_ITS := u-boot.its
+$(U_BOOT_ITS): $(subst ",,$(CONFIG_SPL_FIT_SOURCE))
+	$(call if_changed,copy)
 else
 ifneq ($(CONFIG_SPL_FIT_GENERATOR),"")
 U_BOOT_ITS := u-boot.its
@@ -1383,6 +1388,16 @@ UBOOT_BIN := u-boot-with-dtb.bin
 else
 UBOOT_BIN := u-boot.bin
 endif
+
+MKIMAGEFLAGS_u-boot-lzma.img = -A $(ARCH) -T standalone -C lzma -O u-boot \
+	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
+
+u-boot.bin.lzma: u-boot.bin FORCE
+	$(call if_changed,lzma)
+
+u-boot-lzma.img: u-boot.bin.lzma FORCE
+	$(call if_changed,mkimage)
 
 u-boot-dtb.img u-boot.img u-boot.kwb u-boot.pbl u-boot-ivt.img: \
 		$(if $(CONFIG_SPL_LOAD_FIT),u-boot-nodtb.bin \
@@ -2098,6 +2113,7 @@ help:
 	@echo  ''
 	@echo  '  check           - Run all automated tests that use sandbox'
 	@echo  '  qcheck          - Run quick automated tests that use sandbox'
+	@echo  '  tcheck          - Run quick automated tests on tools'
 	@echo  ''
 	@echo  'Other generic targets:'
 	@echo  '  all		  - Build all necessary images depending on configuration'
@@ -2142,6 +2158,9 @@ tests check:
 
 qcheck:
 	$(srctree)/test/run quick
+
+tcheck:
+	$(srctree)/test/run tools
 
 # Documentation targets
 # ---------------------------------------------------------------------------
