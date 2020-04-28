@@ -189,12 +189,11 @@
 #if defined(CONFIG_DRAM_SUN8I_R40_HAL) || defined(CONFIG_DRAM_SUN8I_R40_AWLIB)
 /* more ram for allwinner library  */
 #ifdef CONFIG_SPL_MMC_SUPPORT
-#define SPL_EXTRA 0x0320
+#define CONFIG_SPL_MAX_SIZE		0x6740
 #else
-#define SPL_EXTRA 0
+#define CONFIG_SPL_MAX_SIZE		0x6240
 #endif
-#define CONFIG_SPL_MAX_SIZE		(0x6240+SPL_EXTRA)		/* sram A1-A2 =32KiB */
-#define LOW_LEVEL_SRAM_STACK		0x0000a400	/* sunxi-fel swap buffer 2 */
+#define LOW_LEVEL_SRAM_STACK		0x8800 /*0x0000a400	 sunxi-fel swap buffer 2 */
 #else
 #define CONFIG_SPL_MAX_SIZE		0x5fa0		/* 24KB on sun4i/sun7i */
 #define LOW_LEVEL_SRAM_STACK		0x00008000	/* End of sram */
