@@ -89,6 +89,14 @@ static int gpio_init(void)
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(22), SUN4I_GPB_UART0);
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(23), SUN4I_GPB_UART0);
 	sunxi_gpio_set_pull(SUNXI_GPB(23), SUNXI_GPIO_PULL_UP);
+#if 1
+	/* enable jtag */
+	/* PB 15, 14, 16, 17 */
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(14), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(15), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(16), 3);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(17), 3);
+#endif
 #elif CONFIG_CONS_INDEX == 1 && defined(CONFIG_MACH_SUN5I)
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(19), SUN5I_GPB_UART0);
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(20), SUN5I_GPB_UART0);
@@ -299,19 +307,10 @@ u32 spl_boot_device(void)
 	return sunxi_get_boot_device();
 }
 
-static void enable_jtag_pb(void)
-{
-	/* PB 15, 14, 16, 17 */
-	sunxi_gpio_set_cfgpin(SUNXI_GPB(14), 3);
-	sunxi_gpio_set_cfgpin(SUNXI_GPB(15), 3);
-	sunxi_gpio_set_cfgpin(SUNXI_GPB(16), 3);
-	sunxi_gpio_set_cfgpin(SUNXI_GPB(17), 3);
-}
+
 
 void board_init_f(ulong dummy)
 {
-	volatile unsigned long jtag_continue;
-	unsigned int jtag_cnt;
 	spl_init();
 	preloader_console_init();
 
@@ -320,8 +319,9 @@ void board_init_f(ulong dummy)
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 #if 0
-	puts("jtag loop\n");
-	enable_jtag_pb();
+	volatile unsigned long jtag_continue;
+	unsigned int jtag_cnt;
+	puts("\njtag loop\n");
 	jtag_continue=0;
 	jtag_cnt =0;
 	while (jtag_continue==0) {
