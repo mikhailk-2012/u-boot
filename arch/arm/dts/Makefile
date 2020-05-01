@@ -377,7 +377,8 @@ dtb-$(CONFIG_FSL_LSCH3) += fsl-ls2080a-qds.dtb \
 	fsl-ls1088a-rdb.dtb \
 	fsl-ls1088a-qds.dtb \
 	fsl-ls1028a-rdb.dtb \
-	fsl-ls1028a-qds.dtb \
+	fsl-ls1028a-qds-duart.dtb \
+	fsl-ls1028a-qds-lpuart.dtb \
 	fsl-lx2160a-rdb.dtb \
 	fsl-lx2160a-qds.dtb
 dtb-$(CONFIG_FSL_LSCH2) += fsl-ls1043a-qds-duart.dtb \
@@ -749,11 +750,11 @@ dtb-$(CONFIG_RCAR_GEN2) += \
 	r8a7794-silk-u-boot.dtb
 
 dtb-$(CONFIG_RCAR_GEN3) += \
-	r8a7795-h3ulcb-u-boot.dtb \
-	r8a7795-salvator-x-u-boot.dtb \
-	r8a7796-m3ulcb-u-boot.dtb \
-	r8a7796-salvator-x-u-boot.dtb \
-	r8a77965-m3nulcb-u-boot.dtb \
+	r8a77950-ulcb-u-boot.dtb \
+	r8a77950-salvator-x-u-boot.dtb \
+	r8a77960-ulcb-u-boot.dtb \
+	r8a77960-salvator-x-u-boot.dtb \
+	r8a77965-ulcb-u-boot.dtb \
 	r8a77965-salvator-x-u-boot.dtb \
 	r8a77970-eagle-u-boot.dtb \
 	r8a77980-condor-u-boot.dtb \
