@@ -125,7 +125,7 @@
 &i2c0 {
 	status = "okay";
 
-	axp22x: pmic@68 {
+	axp22x: pmic@34 {
 		compatible = "x-powers,axp221";
 		reg = <0x34>;
 		interrupt-parent = <&nmi_intc>;
@@ -183,7 +183,7 @@
 &reg_aldo2 {
 	regulator-always-on;
 	regulator-min-microvolt = <1620000>;
-	regulator-max-microvolt = <198000>;
+	regulator-max-microvolt = <1980000>;
 	regulator-name = "vcc-emmcvq18";
 };
 
@@ -328,10 +328,9 @@
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <1>;
 		max-speed = <100>;
-		/* PH22 doesnt work! wrong pin ? */
-		//reset-gpios = <&pio 7 22 GPIO_ACTIVE_HIGH>; /* PH22 */
-		//reset-assert-us = <2500>;
-		//reset-deassert-us = <25000>;
+		reset-gpios = <&pio 7 22 GPIO_ACTIVE_LOW>; /* PH22 */
+		reset-assert-us = <10000>;
+		reset-deassert-us = <25000>;
 	};
 };
 
