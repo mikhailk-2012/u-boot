@@ -106,6 +106,7 @@ dtb-$(CONFIG_ROCKCHIP_RK3308) += \
 
 dtb-$(CONFIG_ROCKCHIP_RK3328) += \
 	rk3328-evb.dtb \
+	rk3328-roc-cc.dtb \
 	rk3328-rock64.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RK3368) += \
@@ -125,12 +126,14 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-leez-p710.dtb \
 	rk3399-nanopc-t4.dtb \
 	rk3399-nanopi-m4.dtb \
+	rk3399-nanopi-m4-2gb.dtb \
 	rk3399-nanopi-neo4.dtb \
 	rk3399-orangepi.dtb \
 	rk3399-puma-ddr1333.dtb \
 	rk3399-puma-ddr1600.dtb \
 	rk3399-puma-ddr1866.dtb \
 	rk3399-roc-pc.dtb \
+	rk3399-roc-pc-mezzanine.dtb \
 	rk3399-rock-pi-4.dtb \
 	rk3399-rock960.dtb \
 	rk3399-rockpro64.dtb
@@ -734,6 +737,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-verdin.dtb \
 	imx8mn-ddr4-evk.dtb \
 	imx8mq-evk.dtb \
+	imx8mq-phanbell.dtb \
 	imx8mp-evk.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
