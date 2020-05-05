@@ -656,6 +656,12 @@ void sunxi_board_init(void)
 	power_failed |= axp_set_eldo(1, CONFIG_AXP_ELDO1_VOLT);
 	power_failed |= axp_set_eldo(2, CONFIG_AXP_ELDO2_VOLT);
 	power_failed |= axp_set_eldo(3, CONFIG_AXP_ELDO3_VOLT);
+
+#if defined(CONFIG_DRAM_SUN8I_R40_HAL) || defined(CONFIG_DRAM_SUN8I_R40_AWLIB)
+	/* OKA40i board specific code */
+	power_failed |= axp_set_ldoio(1, 3300);
+	power_failed |= axp_set_ldoio(2, 3300);
+#endif
 #endif
 
 #ifdef CONFIG_AXP818_POWER
