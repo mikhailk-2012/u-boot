@@ -14,6 +14,7 @@
 #endif
 #ifdef CONFIG_AXP221_POWER
 #include <axp221.h>
+int axp_set_ldoio(int io_num, unsigned int mvolt);
 #endif
 #ifdef CONFIG_AXP809_POWER
 #include <axp809.h>

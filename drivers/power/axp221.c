@@ -206,6 +206,27 @@ int axp_set_eldo(int eldo_num, unsigned int mvolt)
 				AXP221_OUTPUT_CTRL2_ELDO1_EN << (eldo_num - 1));
 }
 
+int axp_set_ldoio(int io_num, unsigned int mvolt)
+{
+	int ret;
+	u8 reg;
+	u8 cfg = axp221_mvolt_to_cfg(mvolt, 700, 3300, 100);
+
+	if (io_num < 1 || io_num > 3)
+		return -EINVAL;
+
+	reg = (io_num > 1)? AXP221_LDOIO1_CTRL : AXP221_LDOIO0_CTRL;
+
+	if (mvolt == 0)
+		pmic_bus_write(reg, 0x07);
+
+	ret = pmic_bus_write(reg + 1, cfg);
+	if (ret)
+		return ret;
+
+	return pmic_bus_write(reg, 0x03);
+}
+
 int axp_init(void)
 {
 	u8 axp_chip_id;
