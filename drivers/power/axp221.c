@@ -255,6 +255,11 @@ int axp_init(void)
 	if (ret)
 		return ret;
 
+	/* N_VBUSEN pin function : input */
+	ret = pmic_bus_write(0x8f, 0x11);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 

@@ -460,7 +460,6 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			ret = gpio_direction_output(phy->gpio_vbus, 0);
 			if (ret)
 				return ret;
-			sunxi_gpio_set_drv(phy->gpio_vbus, 3);
 			debug("[usb_phy%d] gpio_vbus %d\n", i, phy->gpio_vbus);
 		}
 
