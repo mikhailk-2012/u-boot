@@ -24,8 +24,6 @@
 #define PHYS_SDRAM_1			MMDC0_ARB_BASE_ADDR
 #define PHYS_SDRAM_2			MMDC1_ARB_BASE_ADDR
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
-#define CONFIG_SYS_MEMTEST_START	0x10000000
-#define CONFIG_SYS_MEMTEST_END		0x10010000
 #define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
 #define CONFIG_SYS_INIT_RAM_SIZE	IRAM_SIZE
 #define CONFIG_SYS_INIT_SP_OFFSET \
@@ -51,8 +49,8 @@
 	"scriptaddr=" __stringify(CONFIG_LOADADDR) "\0" \
 	"fdtfile=undefined\0" \
 	"stdin=serial,usbkbd\0" \
-	"stdout=serial,vga\0" \
-	"stderr=serial,vga\0" \
+	"stdout=serial,vidconsole\0" \
+	"stderr=serial,vidconsole\0" \
 	"panel=HDMI\0" \
 	"autoload=no\0" \
 	"uImage=uImage-cm-fx6\0" \

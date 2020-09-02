@@ -34,7 +34,7 @@ dtb-$(CONFIG_ARCH_DAVINCI) += \
 	da850-lcdk.dtb \
 	da850-lego-ev3.dtb
 
-dtb-$(CONFIG_KIRKWOOD) += \
+dtb-$(CONFIG_ARCH_KIRKWOOD) += \
 	kirkwood-atl-sbx81lifkw.dtb \
 	kirkwood-atl-sbx81lifxcat.dtb \
 	kirkwood-blackarmor-nas220.dtb \
@@ -107,7 +107,8 @@ dtb-$(CONFIG_ROCKCHIP_RK3308) += \
 dtb-$(CONFIG_ROCKCHIP_RK3328) += \
 	rk3328-evb.dtb \
 	rk3328-roc-cc.dtb \
-	rk3328-rock64.dtb
+	rk3328-rock64.dtb \
+	rk3328-rock-pi-e.dtb
 
 dtb-$(CONFIG_ROCKCHIP_RK3368) += \
 	rk3368-lion.dtb \
@@ -129,9 +130,8 @@ dtb-$(CONFIG_ROCKCHIP_RK3399) += \
 	rk3399-nanopi-m4-2gb.dtb \
 	rk3399-nanopi-neo4.dtb \
 	rk3399-orangepi.dtb \
-	rk3399-puma-ddr1333.dtb \
-	rk3399-puma-ddr1600.dtb \
-	rk3399-puma-ddr1866.dtb \
+	rk3399-pinebook-pro.dtb \
+	rk3399-puma-haikou.dtb \
 	rk3399-roc-pc.dtb \
 	rk3399-roc-pc-mezzanine.dtb \
 	rk3399-rock-pi-4.dtb \
@@ -162,7 +162,7 @@ dtb-$(CONFIG_ARCH_MESON) += \
 	meson-g12b-a311d-khadas-vim3.dtb \
 	meson-sm1-khadas-vim3l.dtb \
 	meson-sm1-sei610.dtb
-dtb-$(CONFIG_TEGRA) += tegra20-harmony.dtb \
+dtb-$(CONFIG_ARCH_TEGRA) += tegra20-harmony.dtb \
 	tegra20-medcom-wide.dtb \
 	tegra20-paz00.dtb \
 	tegra20-plutux.dtb \
@@ -374,16 +374,27 @@ dtb-$(CONFIG_ARCH_LS1021A) += ls1021a-qds-duart.dtb \
 	ls1021a-twr-duart.dtb ls1021a-twr-lpuart.dtb \
 	ls1021a-iot-duart.dtb ls1021a-tsn.dtb
 dtb-$(CONFIG_FSL_LSCH3) += fsl-ls2080a-qds.dtb \
+	fsl-ls2080a-qds-42-x.dtb \
 	fsl-ls2080a-rdb.dtb \
 	fsl-ls2081a-rdb.dtb \
 	fsl-ls2088a-rdb-qspi.dtb \
 	fsl-ls1088a-rdb.dtb \
 	fsl-ls1088a-qds.dtb \
+	fsl-ls1088a-qds-21-x.dtb \
+	fsl-ls1088a-qds-29-x.dtb \
 	fsl-ls1028a-rdb.dtb \
 	fsl-ls1028a-qds-duart.dtb \
 	fsl-ls1028a-qds-lpuart.dtb \
 	fsl-lx2160a-rdb.dtb \
-	fsl-lx2160a-qds.dtb
+	fsl-lx2160a-qds.dtb \
+	fsl-lx2160a-qds-3-x-x.dtb \
+	fsl-lx2160a-qds-3-11-x.dtb \
+	fsl-lx2160a-qds-7-x-x.dtb \
+	fsl-lx2160a-qds-7-11-x.dtb \
+	fsl-lx2160a-qds-19-x-x.dtb \
+	fsl-lx2160a-qds-19-11-x.dtb \
+	fsl-lx2160a-qds-20-x-x.dtb \
+	fsl-lx2160a-qds-20-11-x.dtb
 dtb-$(CONFIG_FSL_LSCH2) += fsl-ls1043a-qds-duart.dtb \
 	fsl-ls1043a-qds-lpuart.dtb \
 	fsl-ls1043a-rdb.dtb \
@@ -737,8 +748,10 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
 	imx8mm-verdin.dtb \
 	imx8mn-ddr4-evk.dtb \
 	imx8mq-evk.dtb \
+	imx8mm-beacon-kit.dtb \
 	imx8mq-phanbell.dtb \
-	imx8mp-evk.dtb
+	imx8mp-evk.dtb \
+	imx8mq-pico-pi.dtb
 
 dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 	imxrt1020-evk.dtb
@@ -764,6 +777,10 @@ dtb-$(CONFIG_RCAR_GEN3) += \
 	r8a77980-condor-u-boot.dtb \
 	r8a77990-ebisu-u-boot.dtb \
 	r8a77995-draak-u-boot.dtb
+
+ifdef CONFIG_RCAR_GEN3
+DTC_FLAGS += -R 4 -p 0x1000
+endif
 
 dtb-$(CONFIG_RZA1) += \
 	r7s72100-gr-peach-u-boot.dtb

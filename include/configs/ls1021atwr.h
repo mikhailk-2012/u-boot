@@ -234,16 +234,6 @@
  * MMC
  */
 
-/* SPI */
-#if defined(CONFIG_QSPI_BOOT) || defined(CONFIG_SD_BOOT_QSPI)
-/* QSPI */
-#define QSPI0_AMBA_BASE			0x40000000
-#define FSL_QSPI_FLASH_SIZE		(1 << 24)
-#define FSL_QSPI_FLASH_NUM		2
-
-/* DSPI */
-#endif
-
 /* DM SPI */
 #if defined(CONFIG_FSL_DSPI) || defined(CONFIG_FSL_QSPI)
 #define CONFIG_DM_SPI_FLASH
@@ -440,9 +430,6 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_BOOTMAPSZ		(256 << 20)
-
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
 #define CONFIG_SYS_LOAD_ADDR		0x82000000
 

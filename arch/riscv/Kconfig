@@ -56,6 +56,7 @@ source "board/sifive/fu540/Kconfig"
 
 # platform-specific options below
 source "arch/riscv/cpu/ax25/Kconfig"
+source "arch/riscv/cpu/fu540/Kconfig"
 source "arch/riscv/cpu/generic/Kconfig"
 
 # architecture-specific options below
@@ -271,5 +272,8 @@ config SHOW_REGS
 config STACK_SIZE_SHIFT
 	int
 	default 14
+
+config OF_BOARD_FIXUP
+	default y if OF_SEPARATE
 
 endmenu

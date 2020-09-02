@@ -10,8 +10,10 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/log2.h>
@@ -56,8 +58,7 @@ static int spi_nor_read_reg(struct spi_nor *nor, u8 code, u8 *val, int len)
 
 	ret = spi_nor_read_write_reg(nor, &op, val);
 	if (ret < 0)
-		dev_dbg(&flash->spimem->spi->dev, "error %d reading %x\n", ret,
-			code);
+		dev_dbg(nor->dev, "error %d reading %x\n", ret, code);
 
 	return ret;
 }
@@ -1234,6 +1235,12 @@ static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
 	size_t page_offset, page_remain, i;
 	ssize_t ret;
 
+#ifdef CONFIG_SPI_FLASH_SST
+	/* sst nor chips use AAI word program */
+	if (nor->info->flags & SST_WRITE)
+		return sst_write(mtd, to, len, retlen, buf);
+#endif
+
 	dev_dbg(nor->dev, "to 0x%08x, len %zd\n", (u32)to, len);
 
 	if (!len)
@@ -1374,7 +1381,8 @@ static int spansion_read_cr_quad_enable(struct spi_nor *nor)
 	/* Check current Quad Enable bit value. */
 	ret = read_cr(nor);
 	if (ret < 0) {
-		dev_dbg(dev, "error while reading configuration register\n");
+		dev_dbg(nor->dev,
+			"error while reading configuration register\n");
 		return -EINVAL;
 	}
 
@@ -1386,7 +1394,7 @@ static int spansion_read_cr_quad_enable(struct spi_nor *nor)
 	/* Keep the current value of the Status Register. */
 	ret = read_sr(nor);
 	if (ret < 0) {
-		dev_dbg(dev, "error while reading status register\n");
+		dev_dbg(nor->dev, "error while reading status register\n");
 		return -EINVAL;
 	}
 	sr_cr[0] = ret;
@@ -2069,7 +2077,8 @@ static int spi_nor_parse_sfdp(struct spi_nor *nor,
 		err = spi_nor_read_sfdp(nor, sizeof(header),
 					psize, param_headers);
 		if (err < 0) {
-			dev_err(dev, "failed to read SFDP parameter headers\n");
+			dev_err(nor->dev,
+				"failed to read SFDP parameter headers\n");
 			goto exit;
 		}
 	}
@@ -2099,7 +2108,8 @@ static int spi_nor_parse_sfdp(struct spi_nor *nor,
 
 		switch (SFDP_PARAM_HEADER_ID(param_header)) {
 		case SFDP_SECTOR_MAP_ID:
-			dev_info(dev, "non-uniform erase sector maps are not supported yet.\n");
+			dev_info(nor->dev,
+				 "non-uniform erase sector maps are not supported yet.\n");
 			break;
 
 		case SFDP_SST_ID:
@@ -2111,7 +2121,8 @@ static int spi_nor_parse_sfdp(struct spi_nor *nor,
 		}
 
 		if (err) {
-			dev_warn(dev, "Failed to parse optional parameter table: %04x\n",
+			dev_warn(nor->dev,
+				 "Failed to parse optional parameter table: %04x\n",
 				 SFDP_PARAM_HEADER_ID(param_header));
 			/*
 			 * Let's not drop all information we extracted so far
@@ -2525,6 +2536,7 @@ int spi_nor_scan(struct spi_nor *nor)
 	mtd->size = params.size;
 	mtd->_erase = spi_nor_erase;
 	mtd->_read = spi_nor_read;
+	mtd->_write = spi_nor_write;
 
 #if defined(CONFIG_SPI_FLASH_STMICRO) || defined(CONFIG_SPI_FLASH_SST)
 	/* NOR protection support for STmicro/Micron chips and similar */
@@ -2548,13 +2560,7 @@ int spi_nor_scan(struct spi_nor *nor)
 		nor->flash_unlock = sst26_unlock;
 		nor->flash_is_locked = sst26_is_locked;
 	}
-
-	/* sst nor chips use AAI word program */
-	if (info->flags & SST_WRITE)
-		mtd->_write = sst_write;
-	else
 #endif
-		mtd->_write = spi_nor_write;
 
 	if (info->flags & USE_FSR)
 		nor->flags |= SNOR_F_USE_FSR;
@@ -2609,7 +2615,7 @@ int spi_nor_scan(struct spi_nor *nor)
 	}
 
 	if (nor->addr_width > SPI_NOR_MAX_ADDR_WIDTH) {
-		dev_dbg(dev, "address width is too large: %u\n",
+		dev_dbg(nor->dev, "address width is too large: %u\n",
 			nor->addr_width);
 		return -EINVAL;
 	}
@@ -2634,15 +2640,4 @@ int spi_nor_scan(struct spi_nor *nor)
 #endif
 
 	return 0;
-}
-
-/* U-Boot specific functions, need to extend MTD to support these */
-int spi_flash_cmd_get_sw_write_prot(struct spi_nor *nor)
-{
-	int sr = read_sr(nor);
-
-	if (sr < 0)
-		return sr;
-
-	return (sr >> 2) & 7;
 }

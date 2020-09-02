@@ -13,7 +13,8 @@
 #include <malloc.h>
 #include <pe.h>
 #include <sort.h>
-#include "../lib/crypto/pkcs7_parser.h"
+#include <crypto/pkcs7_parser.h>
+#include <linux/err.h>
 
 const efi_guid_t efi_global_variable_guid = EFI_GLOBAL_VARIABLE_GUID;
 const efi_guid_t efi_guid_device_path = EFI_DEVICE_PATH_PROTOCOL_GUID;
@@ -211,14 +212,16 @@ static void efi_set_code_and_data_type(
 
 #ifdef CONFIG_EFI_SECURE_BOOT
 /**
- * cmp_pe_section - compare two sections
- * @arg1:	Pointer to pointer to first section
- * @arg2:	Pointer to pointer to second section
+ * cmp_pe_section() - compare virtual addresses of two PE image sections
+ * @arg1:	pointer to pointer to first section header
+ * @arg2:	pointer to pointer to second section header
  *
- * Compare two sections in PE image.
+ * Compare the virtual addresses of two sections of an portable executable.
+ * The arguments are defined as const void * to allow usage with qsort().
  *
- * Return:	-1, 0, 1 respectively if arg1 < arg2, arg1 == arg2 or
- *		arg1 > arg2
+ * Return:	-1 if the virtual address of arg1 is less than that of arg2,
+ *		0 if the virtual addresses are equal, 1 if the virtual address
+ *		of arg1 is greater than that of arg2.
  */
 static int cmp_pe_section(const void *arg1, const void *arg2)
 {
@@ -236,7 +239,7 @@ static int cmp_pe_section(const void *arg1, const void *arg2)
 }
 
 /**
- * efi_image_parse - parse a PE image
+ * efi_image_parse() - parse a PE image
  * @efi:	Pointer to image
  * @len:	Size of @efi
  * @regp:	Pointer to a list of regions
@@ -292,12 +295,12 @@ bool efi_image_parse(void *efi, size_t len, struct efi_image_regions **regp,
 		efi_image_region_add(regs, efi, &opt->CheckSum, 0);
 		if (nt64->OptionalHeader.NumberOfRvaAndSizes <= ctidx) {
 			efi_image_region_add(regs,
-					     &opt->CheckSum + 1,
+					     &opt->Subsystem,
 					     efi + opt->SizeOfHeaders, 0);
 		} else {
 			/* Skip Certificates Table */
 			efi_image_region_add(regs,
-					     &opt->CheckSum + 1,
+					     &opt->Subsystem,
 					     &opt->DataDirectory[ctidx], 0);
 			efi_image_region_add(regs,
 					     &opt->DataDirectory[ctidx] + 1,
@@ -312,7 +315,7 @@ bool efi_image_parse(void *efi, size_t len, struct efi_image_regions **regp,
 		IMAGE_OPTIONAL_HEADER32 *opt = &nt->OptionalHeader;
 
 		efi_image_region_add(regs, efi, &opt->CheckSum, 0);
-		efi_image_region_add(regs, &opt->CheckSum + 1,
+		efi_image_region_add(regs, &opt->Subsystem,
 				     &opt->DataDirectory[ctidx], 0);
 		efi_image_region_add(regs, &opt->DataDirectory[ctidx] + 1,
 				     efi + opt->SizeOfHeaders, 0);
@@ -366,7 +369,7 @@ bool efi_image_parse(void *efi, size_t len, struct efi_image_regions **regp,
 
 	/* 3. Extra data excluding Certificates Table */
 	if (bytes_hashed + authsz < len) {
-		debug("extra data for hash: %lu\n",
+		debug("extra data for hash: %zu\n",
 		      len - (bytes_hashed + authsz));
 		efi_image_region_add(regs, efi + bytes_hashed,
 				     efi + len - authsz, 0);
@@ -403,7 +406,7 @@ err:
 }
 
 /**
- * efi_image_unsigned_authenticate - authenticate unsigned image with
+ * efi_image_unsigned_authenticate() - authenticate unsigned image with
  * SHA256 hash
  * @regs:	List of regions to be verified
  *
@@ -450,7 +453,7 @@ out:
 }
 
 /**
- * efi_image_authenticate - verify a signature of signed image
+ * efi_image_authenticate() - verify a signature of signed image
  * @efi:	Pointer to image
  * @efi_size:	Size of @efi
  *
@@ -538,8 +541,9 @@ static bool efi_image_authenticate(void *efi, size_t efi_size)
 		}
 		msg = pkcs7_parse_message((void *)wincert + sizeof(*wincert),
 					  wincert->dwLength - sizeof(*wincert));
-		if (!msg) {
+		if (IS_ERR(msg)) {
 			debug("Parsing image's signature failed\n");
+			msg = NULL;
 			goto err;
 		}
 
@@ -633,21 +637,18 @@ efi_status_t efi_load_pe(struct efi_loaded_image_obj *handle,
 		goto err;
 	}
 
-	/* assume sizeof(IMAGE_NT_HEADERS32) <= sizeof(IMAGE_NT_HEADERS64) */
-	if (efi_size < dos->e_lfanew + sizeof(IMAGE_NT_HEADERS32)) {
+	/*
+	 * Check if the image section header fits into the file. Knowing that at
+	 * least one section header follows we only need to check for the length
+	 * of the 64bit header which is longer than the 32bit header.
+	 */
+	if (efi_size < dos->e_lfanew + sizeof(IMAGE_NT_HEADERS64)) {
 		printf("%s: Invalid offset for Extended Header\n", __func__);
 		ret = EFI_LOAD_ERROR;
 		goto err;
 	}
 
 	nt = (void *) ((char *)efi + dos->e_lfanew);
-	if ((nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) &&
-	    (efi_size < dos->e_lfanew + sizeof(IMAGE_NT_HEADERS64))) {
-		printf("%s: Invalid offset for Extended Header\n", __func__);
-		ret = EFI_LOAD_ERROR;
-		goto err;
-	}
-
 	if (nt->Signature != IMAGE_NT_SIGNATURE) {
 		printf("%s: Invalid NT Signature\n", __func__);
 		ret = EFI_LOAD_ERROR;

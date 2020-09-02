@@ -5,11 +5,17 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <config.h>
 #include <cpu_func.h>
 #include <env.h>
+#include <image.h>
 #include <init.h>
 #include <irq_func.h>
+#include <log.h>
+#include <asm/cache.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
@@ -41,6 +47,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CREG_CPU_START		(CREG_BASE + 0x400)
 #define CREG_CPU_START_MASK	0xF
 #define CREG_CPU_START_POL	BIT(4)
+
+#define CREG_CORE_BOOT_IMAGE	GENMASK(5, 4)
 
 #define CREG_CPU_0_ENTRY	(CREG_BASE + 0x404)
 
@@ -927,7 +935,8 @@ static int hsdk_go_prepare_and_run(void)
 	return hsdk_go_run(reg);
 }
 
-static int do_hsdk_go(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_go(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int ret;
 
@@ -992,7 +1001,8 @@ static void init_mark_done(void)
 	writel(~INIT_MARKER_PENDING, INIT_MARKER_REGISTER);
 }
 
-static int do_hsdk_init(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_init(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
 {
 	int ret;
 
@@ -1020,7 +1030,7 @@ U_BOOT_CMD(
 	"- Init HSDK HW\n"
 );
 
-static int do_hsdk_clock_set(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_set(struct cmd_tbl *cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	int ret = 0;
@@ -1052,7 +1062,7 @@ static int do_hsdk_clock_set(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_get(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_get(struct cmd_tbl *cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	ulong rate;
@@ -1080,7 +1090,7 @@ static int do_hsdk_clock_get(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_print(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_print(struct cmd_tbl *cmdtp, int flag, int argc,
 			       char *const argv[])
 {
 	/* Main clocks */
@@ -1092,7 +1102,7 @@ static int do_hsdk_clock_print(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_print_all(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_print_all(struct cmd_tbl *cmdtp, int flag, int argc,
 				   char *const argv[])
 {
 	/*
@@ -1153,16 +1163,17 @@ static int do_hsdk_clock_print_all(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-cmd_tbl_t cmd_hsdk_clock[] = {
+struct cmd_tbl cmd_hsdk_clock[] = {
 	U_BOOT_CMD_MKENT(set, 3, 0, do_hsdk_clock_set, "", ""),
 	U_BOOT_CMD_MKENT(get, 3, 0, do_hsdk_clock_get, "", ""),
 	U_BOOT_CMD_MKENT(print, 4, 0, do_hsdk_clock_print, "", ""),
 	U_BOOT_CMD_MKENT(print_all, 4, 0, do_hsdk_clock_print_all, "", ""),
 };
 
-static int do_hsdk_clock(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_clock(struct cmd_tbl *cmdtp, int flag, int argc,
+			 char *const argv[])
 {
-	cmd_tbl_t *c;
+	struct cmd_tbl *c;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
@@ -1241,11 +1252,16 @@ int board_late_init(void)
 
 int checkboard(void)
 {
+	u32 reg;
+
 	printf("Board: Synopsys %s\n", board_name(get_board_type_runtime()));
 
 	if (board_mismatch())
 		printf("WARN: U-boot is configured NOT for this board but for %s!\n",
 		       board_name(get_board_type_config()));
+
+	reg = readl(CREG_AXI_M_HS_CORE_BOOT) & CREG_CORE_BOOT_IMAGE;
+	printf("U-boot autostart: %s\n", reg ? "enabled" : "disabled");
 
 	return 0;
 };

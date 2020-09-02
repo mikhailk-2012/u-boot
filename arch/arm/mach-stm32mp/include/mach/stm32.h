@@ -6,6 +6,10 @@
 #ifndef _MACH_STM32_H_
 #define _MACH_STM32_H_
 
+#ifndef __ASSEMBLY__
+#include <linux/bitops.h>
+#endif
+
 /*
  * Peripheral memory map
  * only address used before device tree parsing
@@ -80,6 +84,9 @@ enum boot_device {
 
 	BOOT_SERIAL_USB = 0x60,
 	BOOT_SERIAL_USB_OTG = 0x62,
+
+	BOOT_FLASH_SPINAND = 0x70,
+	BOOT_FLASH_SPINAND_1 = 0x71,
 };
 
 /* TAMP registers */
@@ -130,5 +137,5 @@ enum forced_boot_mode {
 #define BSEC_OTP_MAC	57
 #define BSEC_OTP_BOARD	59
 
-#endif /* __ASSEMBLY__*/
+#endif /* __ASSEMBLY__ */
 #endif /* _MACH_STM32_H_ */

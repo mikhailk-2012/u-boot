@@ -104,7 +104,9 @@
 			<&gpio_c 2 GPIO_OUT>,
 			<&gpio_c 3 (GPIO_IN|GPIO_PULL_UP)>,
 			<&gpio_c 4 (GPIO_IN|GPIO_PULL_DOWN)>,
-			<&gpio_c 5 GPIO_IN>;
+			<&gpio_c 5 GPIO_IN>,
+			<&gpio_c 6 (GPIO_ACTIVE_LOW|GPIO_OUT|GPIO_OPEN_DRAIN)>,
+			<&gpio_c 7 (GPIO_ACTIVE_LOW|GPIO_OUT|GPIO_OPEN_SOURCE)>;
 		int-value = <1234>;
 		uint-value = <(-1234)>;
 		int64-value = /bits/ 64 <0x1111222233334444>;
@@ -159,10 +161,21 @@
 		broken;
 	};
 
+	phy_provider2: gen_phy@2 {
+		compatible = "sandbox,phy";
+		#phy-cells = <0>;
+	};
+
 	gen_phy_user: gen_phy_user {
 		compatible = "simple-bus";
 		phys = <&phy_provider0 0>, <&phy_provider0 1>, <&phy_provider1>;
 		phy-names = "phy1", "phy2", "phy3";
+	};
+
+	gen_phy_user1: gen_phy_user1 {
+		compatible = "simple-bus";
+		phys = <&phy_provider0 0>, <&phy_provider2>;
+		phy-names = "phy1", "phy2";
 	};
 
 	some-bus {
@@ -216,6 +229,24 @@
 
 	h-test {
 		compatible = "denx,u-boot-fdt-test1";
+	};
+
+	i-test {
+		compatible = "mediatek,u-boot-fdt-test";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		subnode@0 {
+			reg = <0>;
+		};
+
+		subnode@1 {
+			reg = <1>;
+		};
+
+		subnode@2 {
+			reg = <2>;
+		};
 	};
 
 	devres-test {
@@ -312,6 +343,26 @@
 			#gpio-cells = <1>;
 			gpio-bank-name = "a";
 			sandbox,gpio-count = <20>;
+			hog_input_active_low {
+				gpio-hog;
+				input;
+				gpios = <0 GPIO_ACTIVE_LOW>;
+			};
+			hog_input_active_high {
+				gpio-hog;
+				input;
+				gpios = <1 GPIO_ACTIVE_HIGH>;
+			};
+			hog_output_low {
+				gpio-hog;
+				output-low;
+				gpios = <2 GPIO_ACTIVE_HIGH>;
+			};
+			hog_output_high {
+				gpio-hog;
+				output-high;
+				gpios = <3 GPIO_ACTIVE_HIGH>;
+			};
 		};
 
 		gpio_b: extra-gpios {

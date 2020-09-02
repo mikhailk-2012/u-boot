@@ -7,6 +7,7 @@
 #include <config.h>
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <u-boot/rsa-mod-exp.h>
 
 static int mod_exp_sw(struct udevice *dev, const uint8_t *sig, uint32_t sig_len,
@@ -31,6 +32,7 @@ U_BOOT_DRIVER(mod_exp_sw) = {
 	.name	= "mod_exp_sw",
 	.id	= UCLASS_MOD_EXP,
 	.ops	= &mod_exp_ops_sw,
+	.flags	= DM_FLAG_PRE_RELOC,
 };
 
 U_BOOT_DEVICE(mod_exp_sw) = {

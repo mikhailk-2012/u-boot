@@ -8,7 +8,9 @@
 #include <common.h>
 #include <dm.h>
 #include <eeprom.h>
+#include <image.h>
 #include <init.h>
+#include <net.h>
 #include <dm/device-internal.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/crm_regs.h>
@@ -30,6 +32,7 @@
 #include <i2c_eeprom.h>
 #include <mmc.h>
 #include <usb.h>
+#include <linux/delay.h>
 #include <usb/ehci-ci.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -139,8 +142,6 @@ int board_init(void)
 	/* Enable eim_slow clocks */
 	setbits_le32(&mxc_ccm->CCGR6, 0x1 << MXC_CCM_CCGR6_EMI_SLOW_OFFSET);
 
-	setup_dhcom_mac_from_fuse();
-
 	setup_fec_clock();
 
 	return 0;
@@ -185,6 +186,8 @@ int board_late_init(void)
 {
 	u32 hw_code;
 	char buf[16];
+
+	setup_dhcom_mac_from_fuse();
 
 	hw_code = board_get_hwcode();
 

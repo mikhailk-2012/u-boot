@@ -1330,21 +1330,6 @@ The following options need to be configured:
 		can be displayed via the splashscreen support or the
 		bmp command.
 
-- Compression support:
-		CONFIG_GZIP
-
-		Enabled by default to support gzip compressed images.
-
-		CONFIG_BZIP2
-
-		If this option is set, support for bzip2 compressed
-		images is included. If not, only uncompressed and gzip
-		compressed images are supported.
-
-		NOTE: the bzip2 algorithm requires a lot of RAM, so
-		the malloc area (as defined by CONFIG_SYS_MALLOC_LEN) should
-		be at least 4MB.
-
 - MII/PHY support:
 		CONFIG_PHY_CLOCK_FREQ (ppc4xx)
 
@@ -1567,14 +1552,6 @@ The following options need to be configured:
 
 		This enable the NEW i2c subsystem, and will allow you to use
 		i2c commands at the u-boot command line (as long as you set
-		CONFIG_CMD_I2C in CONFIG_COMMANDS) and communicate with i2c
-		based realtime clock chips or other i2c devices. See
-		common/cmd_i2c.c for a description of the command line
-		interface.
-
-		ported i2c driver to the new framework:
-		- drivers/i2c/soft_i2c.c:
-		  - activate first bus with CONFIG_SYS_I2C_SOFT define
 		    CONFIG_SYS_I2C_SOFT_SPEED and CONFIG_SYS_I2C_SOFT_SLAVE
 		    for defining speed and slave address
 		  - activate second bus with I2C_SOFT_DECLARATIONS2 define
@@ -2473,14 +2450,6 @@ Configuration Settings:
 - CONFIG_SYS_BAUDRATE_TABLE:
 		List of legal baudrate settings for this board.
 
-- CONFIG_SYS_MEMTEST_START, CONFIG_SYS_MEMTEST_END:
-		Begin and End addresses of the area used by the
-		simple memory test.
-
-- CONFIG_SYS_MEMTEST_SCRATCH:
-		Scratch address used by the alternate memory test
-		You only need to set this if address zero isn't writeable
-
 - CONFIG_SYS_MEM_RESERVE_SECURE
 		Only implemented for ARMv8 for now.
 		If defined, the size of CONFIG_SYS_MEM_RESERVE_SECURE memory
@@ -2736,10 +2705,6 @@ Configuration Settings:
 	If CONFIG_REGEX is defined, the variable_name above is evaluated as a
 	regular expression. This allows multiple variables to define the same
 	flags without explicitly listing them for each variable.
-
-- CONFIG_ENV_ACCESS_IGNORE_FORCE
-	If defined, don't allow the -f switch to env set override variable
-	access flags.
 
 The following definitions that deal with the placement and management
 of environment data (variable area); in general, we support the

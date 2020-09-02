@@ -9,10 +9,13 @@
 #include <common.h>
 #include <bloblist.h>
 #include <binman_sym.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <handoff.h>
 #include <hang.h>
+#include <init.h>
 #include <irq_func.h>
+#include <log.h>
 #include <serial.h>
 #include <spl.h>
 #include <asm/u-boot.h>
@@ -58,7 +61,8 @@ static bd_t bdata __attribute__ ((section(".data")));
  */
 __weak void show_boot_progress(int val) {}
 
-#if defined(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF)
+#if defined(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF) || \
+	defined(CONFIG_SPL_ATF)
 /* weak, default platform-specific function to initialize dram banks */
 __weak int dram_init_banksize(void)
 {
@@ -100,11 +104,13 @@ void __weak spl_perform_fixups(struct spl_image_info *spl_image)
 {
 }
 
-void spl_fixup_fdt(void)
+void spl_fixup_fdt(void *fdt_blob)
 {
-#if defined(CONFIG_SPL_OF_LIBFDT) && defined(CONFIG_SYS_SPL_ARGS_ADDR)
-	void *fdt_blob = (void *)CONFIG_SYS_SPL_ARGS_ADDR;
+#if defined(CONFIG_SPL_OF_LIBFDT)
 	int err;
+
+	if (!fdt_blob)
+		return;
 
 	err = fdt_check_header(fdt_blob);
 	if (err < 0) {
@@ -423,11 +429,11 @@ static int spl_common_init(bool setup_malloc)
 		}
 	}
 	if (CONFIG_IS_ENABLED(DM)) {
-		bootstage_start(BOOTSTATE_ID_ACCUM_DM_SPL,
+		bootstage_start(BOOTSTAGE_ID_ACCUM_DM_SPL,
 				spl_phase() == PHASE_TPL ? "dm tpl" : "dm_spl");
 		/* With CONFIG_SPL_OF_PLATDATA, bring in all devices */
 		ret = dm_init_and_scan(!CONFIG_IS_ENABLED(OF_PLATDATA));
-		bootstage_accum(BOOTSTATE_ID_ACCUM_DM_SPL);
+		bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_SPL);
 		if (ret) {
 			debug("dm_init_and_scan() returned error %d\n", ret);
 			return ret;
@@ -574,8 +580,7 @@ void board_init_f(ulong dummy)
 		}
 	}
 
-	if (CONFIG_IS_ENABLED(SERIAL_SUPPORT))
-		preloader_console_init();
+	preloader_console_init();
 }
 #endif
 
@@ -638,7 +643,8 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	initr_watchdog();
 #endif
 
-	if (IS_ENABLED(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF))
+	if (IS_ENABLED(CONFIG_SPL_OS_BOOT) || CONFIG_IS_ENABLED(HANDOFF) ||
+	    IS_ENABLED(CONFIG_SPL_ATF))
 		dram_init_banksize();
 
 	bootcount_inc();
@@ -680,6 +686,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #if CONFIG_IS_ENABLED(ATF)
 	case IH_OS_ARM_TRUSTED_FIRMWARE:
 		debug("Jumping to U-Boot via ARM Trusted Firmware\n");
+		spl_fixup_fdt(spl_image.fdt_addr);
 		spl_invoke_atf(&spl_image);
 		break;
 #endif
@@ -699,7 +706,9 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #ifdef CONFIG_SPL_OS_BOOT
 	case IH_OS_LINUX:
 		debug("Jumping to Linux\n");
-		spl_fixup_fdt();
+#if defined(CONFIG_SYS_SPL_ARGS_ADDR)
+		spl_fixup_fdt((void *)CONFIG_SYS_SPL_ARGS_ADDR);
+#endif
 		spl_board_prepare_for_linux();
 		jump_to_image_linux(&spl_image);
 #endif
@@ -724,13 +733,13 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	jump_to_image_no_args(&spl_image);
 }
 
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
 /*
  * This requires UART clocks to be enabled.  In order for this to work the
  * caller must ensure that the gd pointer is valid.
  */
 void preloader_console_init(void)
 {
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
 	gd->baudrate = CONFIG_BAUDRATE;
 
 	serial_init();		/* serial communications setup */
@@ -744,8 +753,8 @@ void preloader_console_init(void)
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
 #endif
-}
 #endif
+}
 
 /**
  * This function is called before the stack is changed from initial stack to

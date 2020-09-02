@@ -10,6 +10,7 @@
 #include <image.h>
 #include <irq_func.h>
 #include <lmb.h>
+#include <log.h>
 #include <mapmem.h>
 #include <linux/kernel.h>
 #include <linux/sizes.h>
@@ -18,8 +19,8 @@ DECLARE_GLOBAL_DATA_PTR;
 /*
  * Image booting support
  */
-static int booti_start(cmd_tbl_t *cmdtp, int flag, int argc,
-			char * const argv[], bootm_headers_t *images)
+static int booti_start(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[], bootm_headers_t *images)
 {
 	int ret;
 	ulong ld;
@@ -98,7 +99,7 @@ static int booti_start(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	int ret;
 
@@ -140,7 +141,7 @@ static char booti_help_text[] =
 	"\tspecifying the size of a RAW initrd.\n"
 	"\tCurrently only booting from gz, bz2, lzma and lz4 compression\n"
 	"\ttypes are supported. In order to boot from any of these compressed\n"
-	"\timages, user have to set kernel_comp_addr_r and kernel_comp_size enviornment\n"
+	"\timages, user have to set kernel_comp_addr_r and kernel_comp_size environment\n"
 	"\tvariables beforehand.\n"
 #if defined(CONFIG_OF_LIBFDT)
 	"\tSince booting a Linux kernel requires a flat device-tree, a\n"

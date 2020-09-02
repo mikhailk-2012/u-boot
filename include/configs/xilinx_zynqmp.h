@@ -19,13 +19,6 @@
 #define GICD_BASE	0xF9010000
 #define GICC_BASE	0xF9020000
 
-#ifndef CONFIG_SYS_MEMTEST_SCRATCH
-# define CONFIG_SYS_MEMTEST_SCRATCH	0x10800000
-#endif
-
-#define CONFIG_SYS_MEMTEST_START	0
-#define CONFIG_SYS_MEMTEST_END		1000
-
 #define CONFIG_SYS_INIT_SP_ADDR		CONFIG_SYS_TEXT_BASE
 
 /* Generic Timer Definitions - setup in EL3. Setup by ATF for other cases */
@@ -37,7 +30,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 0x2000000)
 
 /* Serial setup */
-#define CONFIG_ARM_DCC
 #define CONFIG_CPU_ARMV8
 
 #define CONFIG_SYS_BAUDRATE_TABLE \
@@ -252,7 +244,6 @@
 #endif
 
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_DFU)
-# undef CONFIG_CMD_BOOTD
 # define CONFIG_SPL_ENV_SUPPORT
 # define CONFIG_SPL_HASH_SUPPORT
 # define CONFIG_ENV_MAX_ENTRIES	10

@@ -21,10 +21,6 @@
 #define SYS_SDRAM_SIZE_512		0x20000000
 #define SYS_SDRAM_SIZE_1024		0x40000000
 #define CONFIG_CHIP_SELECTS_PER_CTRL	1
-#define CONFIG_CMD_MEMINFO
-#define CONFIG_CMD_MEMTEST
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
 /* ENV */
 #define CONFIG_SYS_FSL_QSPI_BASE	0x40000000
@@ -36,9 +32,6 @@
 	func(USB, usb, 0) \
 	func(DHCP, dhcp, na)
 #endif
-
-#undef FSL_QSPI_FLASH_SIZE
-#define FSL_QSPI_FLASH_SIZE            SZ_16M
 
 /*  MMC  */
 #ifdef CONFIG_MMC
@@ -120,10 +113,6 @@
 #define CONFIG_BOOTCOMMAND "pfe stop; run distro_bootcmd; run sd_bootcmd; "\
 			   "env exists secureboot && esbc_halt;"
 #endif
-#define CONFIG_CMD_MEMINFO
-#define CONFIG_CMD_MEMTEST
-#define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x9fffffff
 
 #include <asm/fsl_secure_boot.h>
 

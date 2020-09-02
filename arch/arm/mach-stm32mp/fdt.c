@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
 /*
- * Copyright (C) 2019, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2019-2020, STMicroelectronics - All Rights Reserved
  */
 
 #include <common.h>
 #include <fdt_support.h>
+#include <log.h>
+#include <tee.h>
 #include <asm/arch/sys_proto.h>
 #include <dt-bindings/pinctrl/stm32-pinfunc.h>
 #include <linux/io.h>
@@ -218,6 +220,30 @@ static void stm32_fdt_disable(void *fdt, int offset, u32 addr,
 		       string, addr, name);
 }
 
+static void stm32_fdt_disable_optee(void *blob)
+{
+	int off, node;
+
+	/* Delete "optee" firmware node */
+	off = fdt_node_offset_by_compatible(blob, -1, "linaro,optee-tz");
+	if (off >= 0 && fdtdec_get_is_enabled(blob, off))
+		fdt_del_node(blob, off);
+
+	/* Delete "optee@..." reserved-memory node */
+	off = fdt_path_offset(blob, "/reserved-memory/");
+	if (off < 0)
+		return;
+	for (node = fdt_first_subnode(blob, off);
+	     node >= 0;
+	     node = fdt_next_subnode(blob, node)) {
+		if (strncmp(fdt_get_name(blob, node, NULL), "optee@", 6))
+			continue;
+
+		if (fdt_del_node(blob, node))
+			printf("Failed to remove optee reserved-memory node\n");
+	}
+}
+
 /*
  * This function is called right before the kernel is booted. "blob" is the
  * device tree that will be passed to the kernel.
@@ -301,6 +327,10 @@ int ft_system_setup(void *blob, bd_t *bd)
 		do_fixup_by_compat_u32(blob, "st,stm32mp157-z-pinctrl",
 				       "st,package", pkg, false);
 	}
+
+	if (!CONFIG_IS_ENABLED(OPTEE) ||
+	    !tee_find_device(NULL, NULL, NULL, NULL))
+		stm32_fdt_disable_optee(blob);
 
 	return ret;
 }

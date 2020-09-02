@@ -12,11 +12,14 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <flash.h>
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
 #include <search.h>
 #include <errno.h>
+#include <uuid.h>
+#include <asm/cache.h>
 #include <dm/device-internal.h>
 #include <u-boot/crc.h>
 
@@ -50,15 +53,14 @@ static int setup_flash_device(void)
 
 	env_flash = dev_get_uclass_priv(new);
 #else
+	if (env_flash)
+		spi_flash_free(env_flash);
 
+	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+				    CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
 	if (!env_flash) {
-		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
-			CONFIG_ENV_SPI_CS,
-			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
-		if (!env_flash) {
-			env_set_default("spi_flash_probe() failed", 0);
-			return -EIO;
-		}
+		env_set_default("spi_flash_probe() failed", 0);
+		return -EIO;
 	}
 #endif
 	return 0;
@@ -305,7 +307,7 @@ U_BOOT_ENV_LOCATION(sf) = {
 	.location	= ENVL_SPI_FLASH,
 	ENV_NAME("SPI Flash")
 	.load		= env_sf_load,
-	.save		= ENV_SAVE_PTR(env_sf_save),
+	.save		= CONFIG_IS_ENABLED(SAVEENV) ? ENV_SAVE_PTR(env_sf_save) : NULL,
 #if defined(INITENV) && (CONFIG_ENV_ADDR != 0x0)
 	.init		= env_sf_init,
 #endif

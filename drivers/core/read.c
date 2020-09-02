@@ -4,12 +4,12 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#include <asm/types.h>
-#include <asm/io.h>
 #include <common.h>
 #include <dm.h>
-#include <mapmem.h>
 #include <dm/of_access.h>
+#include <mapmem.h>
+#include <asm/types.h>
+#include <asm/io.h>
 
 int dev_read_u32(const struct udevice *dev, const char *propname, u32 *outp)
 {
@@ -351,4 +351,9 @@ fdt_addr_t dev_read_addr_pci(const struct udevice *dev)
 		addr = devfdt_get_addr_pci(dev);
 
 	return addr;
+}
+
+int dev_get_child_count(const struct udevice *dev)
+{
+	return ofnode_get_child_count(dev_ofnode(dev));
 }

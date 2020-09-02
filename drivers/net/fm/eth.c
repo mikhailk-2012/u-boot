@@ -5,6 +5,8 @@
  *	Dave Liu <daveliu@freescale.com>
  */
 #include <common.h>
+#include <log.h>
+#include <part.h>
 #include <asm/io.h>
 #ifdef CONFIG_DM_ETH
 #include <dm.h>
@@ -22,6 +24,7 @@
 #include <fsl_dtsec.h>
 #include <fsl_tgec.h>
 #include <fsl_memac.h>
+#include <linux/delay.h>
 
 #include "fm.h"
 
@@ -54,10 +57,10 @@ static void dtsec_configure_serdes(struct fm_eth *priv)
 	bus.priv = priv->mac->phyregs;
 #else
 	bus.priv = priv->pcs_mdio;
-#endif
 	bus.read = memac_mdio_read;
 	bus.write = memac_mdio_write;
 	bus.reset = memac_mdio_reset;
+#endif
 
 qsgmii_loop:
 	/* SGMII IF mode + AN enable only for 1G SGMII, not for 2.5G */

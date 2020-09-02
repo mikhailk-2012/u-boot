@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <i2c.h>
+#include <log.h>
 #include <malloc.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
@@ -14,6 +15,7 @@
 #if CONFIG_IS_ENABLED(DM_GPIO)
 #include <asm/gpio.h>
 #endif
+#include <linux/delay.h>
 
 #define I2C_MAX_OFFSET_LEN	4
 
@@ -514,7 +516,7 @@ int i2c_deblock_gpio_loop(struct gpio_desc *sda_pin,
 	udelay(delay);
 
 	/*  Toggle SCL until slave release SDA */
-	while (scl_count-- >= 0) {
+	for (; scl_count; --scl_count) {
 		i2c_gpio_set_pin(scl_pin, 1);
 		udelay(delay);
 		i2c_gpio_set_pin(scl_pin, 0);

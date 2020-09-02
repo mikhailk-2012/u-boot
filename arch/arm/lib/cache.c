@@ -8,7 +8,9 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <log.h>
 #include <malloc.h>
+#include <asm/cache.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -75,6 +77,15 @@ static unsigned long noncached_start;
 static unsigned long noncached_end;
 static unsigned long noncached_next;
 
+void noncached_set_region(void)
+{
+#if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
+	mmu_set_region_dcache_behaviour(noncached_start,
+					noncached_end - noncached_start,
+					DCACHE_OFF);
+#endif
+}
+
 void noncached_init(void)
 {
 	phys_addr_t start, end;
@@ -91,9 +102,7 @@ void noncached_init(void)
 	noncached_end = end;
 	noncached_next = start;
 
-#if !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
-	mmu_set_region_dcache_behaviour(noncached_start, size, DCACHE_OFF);
-#endif
+	noncached_set_region();
 }
 
 phys_addr_t noncached_alloc(size_t size, size_t align)

@@ -10,11 +10,11 @@
 #include <image.h>
 #include <hexdump.h>
 #include <malloc.h>
+#include <crypto/pkcs7_parser.h>
 #include <linux/compat.h>
 #include <linux/oid_registry.h>
 #include <u-boot/rsa.h>
 #include <u-boot/sha256.h>
-#include "../lib/crypto/pkcs7_parser.h"
 
 const efi_guid_t efi_guid_image_security_database =
 		EFI_IMAGE_SECURITY_DATABASE_GUID;
@@ -22,6 +22,7 @@ const efi_guid_t efi_guid_sha256 = EFI_CERT_SHA256_GUID;
 const efi_guid_t efi_guid_cert_rsa2048 = EFI_CERT_RSA2048_GUID;
 const efi_guid_t efi_guid_cert_x509 = EFI_CERT_X509_GUID;
 const efi_guid_t efi_guid_cert_x509_sha256 = EFI_CERT_X509_SHA256_GUID;
+const efi_guid_t efi_guid_cert_type_pkcs7 = EFI_CERT_TYPE_PKCS7_GUID;
 
 #ifdef CONFIG_EFI_SECURE_BOOT
 
@@ -528,7 +529,7 @@ out:
  * pointed to by @regs. If @nocheck is false, overlapping among entries
  * will be checked first.
  *
- * Return:	0 on success, status code (negative) on error
+ * Return:	status code
  */
 efi_status_t efi_image_region_add(struct efi_image_regions *regs,
 				  const void *start, const void *end,
@@ -667,7 +668,7 @@ efi_sigstore_parse_siglist(struct efi_signature_list *esl)
 	esd = (struct efi_signature_data *)
 			((u8 *)esl + sizeof(*esl) + esl->signature_header_size);
 
-	while ((left > 0) && left >= esl->signature_size) {
+	while (left > 0) {
 		/* Signature must exist if there is remaining data. */
 		if (left < esl->signature_size) {
 			debug("Certificate is too small\n");

@@ -7,6 +7,7 @@
 #define _CONFIG_HELIOS4_H
 
 #include <linux/sizes.h>
+#include <linux/stringify.h>
 
 /*
  * High Level Configuration Options (easy to change)
@@ -18,10 +19,6 @@
  * U-Boot into it.
  */
 #define CONFIG_SYS_TCLK		250000000	/* 250MHz */
-
-/*
- * Commands configuration
- */
 
 /*
  * SDIO/MMC Card Configuration

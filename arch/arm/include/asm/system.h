@@ -1,7 +1,6 @@
 #ifndef __ASM_ARM_SYSTEM_H
 #define __ASM_ARM_SYSTEM_H
 
-#include <common.h>
 #include <linux/compiler.h>
 #include <asm/barriers.h>
 
@@ -109,6 +108,8 @@
 #define SCTLR_EL1_MMU_DIS	(0)       /* MMU disabled                     */
 
 #ifndef __ASSEMBLY__
+
+struct pt_regs;
 
 u64 get_page_table_size(void);
 #define PGTABLE_SIZE	get_page_table_size()
@@ -527,6 +528,7 @@ void mmu_page_table_flush(unsigned long start, unsigned long stop);
 
 #ifdef CONFIG_ARMV7_PSCI
 void psci_arch_cpu_entry(void);
+void psci_arch_init(void);
 u32 psci_version(void);
 s32 psci_features(u32 function_id, u32 psci_fid);
 s32 psci_cpu_off(void);

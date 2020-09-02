@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <init.h>
+#include <net.h>
 #include <asm/arch/boot.h>
 #include <asm/arch/eth.h>
 #include <asm/arch/gx.h>
@@ -183,7 +184,8 @@ int board_usb_init(int index, enum usb_init_type init)
 
 	/* get the PHYs */
 	for (i = 0; i < 2; i++) {
-		ret = generic_phy_get_by_node(dwc2_node, i, &usb_phys[i]);
+		ret = generic_phy_get_by_index_nodev(dwc2_node, i,
+						     &usb_phys[i]);
 		if (ret && ret != -ENOENT) {
 			pr_err("Failed to get USB PHY%d for %s\n",
 			       i, ofnode_get_name(dwc2_node));

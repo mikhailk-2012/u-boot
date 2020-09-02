@@ -250,6 +250,7 @@ struct fec_priv {
 	struct mii_dev *bus;
 #ifdef CONFIG_PHYLIB
 	struct phy_device *phydev;
+	ofnode phy_of_node;
 #else
 	int phy_id;
 	int (*mii_postcall)(int);
@@ -272,8 +273,6 @@ struct fec_priv {
 	struct clk clk_ptp;
 	u32 clk_rate;
 };
-
-void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
 
 /**
  * @brief Numbers of buffer descriptors for receiving

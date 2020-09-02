@@ -68,6 +68,13 @@ config ROCKCHIP_OTP
 	  addressing and a length or through child-nodes that are generated
 	  based on the e-fuse map retrieved from the DTS.
 
+config SIFIVE_OTP
+	bool "SiFive eMemory OTP driver"
+	depends on MISC
+	help
+	  Enable support for reading and writing the eMemory OTP on the
+	  SiFive SoCs.
+
 config VEXPRESS_CONFIG
 	bool "Enable support for Arm Versatile Express config bus"
 	depends on MISC
@@ -310,7 +317,7 @@ config STM32MP_FUSE
 
 config STM32_RCC
 	bool "Enable RCC driver for the STM32 SoC's family"
-	depends on (STM32 || ARCH_STM32MP) && MISC
+	depends on (ARCH_STM32 || ARCH_STM32MP) && MISC
 	help
 	  Enable the STM32 RCC driver. The RCC block (Reset and Clock Control
 	  block) is responsible of the management of the clock and reset

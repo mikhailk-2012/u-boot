@@ -3,7 +3,7 @@
 VERSION = 2020
 PATCHLEVEL = 07
 SUBLEVEL =
-EXTRAVERSION = -rc1
+EXTRAVERSION =
 NAME =
 
 # *DOCUMENTATION*
@@ -722,13 +722,6 @@ else
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 endif
 
-# turn jbsr into jsr for m68k
-ifeq ($(ARCH),m68k)
-ifeq ($(findstring 3.4,$(shell $(CC) --version)),3.4)
-KBUILD_AFLAGS += -Wa,-gstabs,-S
-endif
-endif
-
 # Prohibit date/time macros, which would make the build non-deterministic
 KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
 
@@ -936,7 +929,7 @@ ALL-y += u-boot-sunxi-with-spl.bin
 endif
 
 # enable combined SPL/u-boot/dtb rules for tegra
-ifeq ($(CONFIG_TEGRA)$(CONFIG_SPL),yy)
+ifeq ($(CONFIG_ARCH_TEGRA)$(CONFIG_SPL),yy)
 ALL-y += u-boot-tegra.bin u-boot-nodtb-tegra.bin
 ALL-$(CONFIG_OF_SEPARATE) += u-boot-dtb-tegra.bin
 endif
@@ -1445,22 +1438,15 @@ u-boot-with-spl.bin: $(SPL_IMAGE) $(SPL_PAYLOAD) FORCE
 
 ifeq ($(CONFIG_ARCH_ROCKCHIP),y)
 
-# rockchip image type
-ifeq ($(CONFIG_SPL_SPI_LOAD),y)
-ROCKCHIP_IMG_TYPE := rkspi
-else
-ROCKCHIP_IMG_TYPE := rksd
-endif
-
 # TPL + SPL
 ifeq ($(CONFIG_SPL)$(CONFIG_TPL),yy)
-MKIMAGEFLAGS_u-boot-tpl-rockchip.bin = -n $(CONFIG_SYS_SOC) -T $(ROCKCHIP_IMG_TYPE)
+MKIMAGEFLAGS_u-boot-tpl-rockchip.bin = -n $(CONFIG_SYS_SOC) -T rksd
 tpl/u-boot-tpl-rockchip.bin: tpl/u-boot-tpl.bin FORCE
 	$(call if_changed,mkimage)
 idbloader.img: tpl/u-boot-tpl-rockchip.bin spl/u-boot-spl.bin FORCE
 	$(call if_changed,cat)
 else
-MKIMAGEFLAGS_idbloader.img = -n $(CONFIG_SYS_SOC) -T $(ROCKCHIP_IMG_TYPE)
+MKIMAGEFLAGS_idbloader.img = -n $(CONFIG_SYS_SOC) -T rksd
 idbloader.img: spl/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
 endif
@@ -1632,7 +1618,7 @@ endif
 u-boot-x86-with-spl.bin: spl/u-boot-spl.bin u-boot.bin FORCE
 	$(call if_changed,binman)
 
-ifneq ($(CONFIG_TEGRA),)
+ifneq ($(CONFIG_ARCH_TEGRA),)
 ifneq ($(CONFIG_BINMAN),)
 # Makes u-boot-dtb-tegra.bin u-boot-tegra.bin u-boot-nodtb-tegra.bin
 %-dtb-tegra.bin %-tegra.bin %-nodtb-tegra.bin: \
@@ -2037,7 +2023,7 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h tools/version.h \
 	       boot* u-boot* MLO* SPL System.map fit-dtb.blob* \
 	       u-boot-ivt.img.log u-boot-dtb.imx.log SPL.log u-boot.imx.log \
 	       lpc32xx-* bl31.c bl31.elf bl31_*.bin image.map tispl.bin* \
-	       idbloader.img flash.bin flash.log
+	       idbloader.img flash.bin flash.log defconfig
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl \

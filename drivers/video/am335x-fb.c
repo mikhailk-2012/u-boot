@@ -13,15 +13,17 @@
  */
 #include <common.h>
 #include <dm.h>
-#include <asm/io.h>
+#include <lcd.h>
+#include <log.h>
+#include <video.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/omap.h>
-#include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/io.h>
 #include <asm/utils.h>
+#include <linux/delay.h>
 #include <linux/err.h>
-#include <lcd.h>
-#include <video.h>
 #include "am335x-fb.h"
 
 #define LCDC_FMAX				200000000

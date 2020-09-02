@@ -491,6 +491,7 @@ config CMD_SPL_WRITE_SIZE
 
 config CMD_FITUPD
 	bool "fitImage update command"
+	depends on UPDATE_TFTP
 	help
 	  Implements the 'fitupd' command, which allows to automatically
 	  store software updates present on a TFTP server in NOR Flash
@@ -750,6 +751,22 @@ config SYS_ALT_MEMTEST
 	help
 	  Use a more complete alternative memory test.
 
+config SYS_MEMTEST_START
+	hex "default start address for mtest"
+	default 0
+	help
+	  This is the default start address for mtest for simple read/write
+	  test. If no arguments are given to mtest, default address is used
+	  as start address.
+
+config SYS_MEMTEST_END
+	hex "default end address for mtest"
+	default 0x1000
+	help
+	  This is the default end address for mtest for simple read/write
+	  test. If no arguments are given to mtest, default address is used
+	  as end address.
+
 endif
 
 config CMD_SHA1SUM
@@ -794,11 +811,13 @@ config CMD_UNLZ4
 config CMD_UNZIP
 	bool "unzip"
 	default y if CMD_BOOTI
+	select GZIP
 	help
 	  Uncompress a zip-compressed memory region.
 
 config CMD_ZIP
 	bool "zip"
+	select GZIP_COMPRESSED
 	help
 	  Compress a memory region with zlib deflate method.
 

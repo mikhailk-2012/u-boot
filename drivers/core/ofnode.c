@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
+#include <log.h>
 #include <malloc.h>
 #include <linux/libfdt.h>
 #include <dm/of_access.h>
@@ -472,6 +473,17 @@ ofnode ofnode_get_chosen_node(const char *name)
 		return ofnode_null();
 
 	return ofnode_path(prop);
+}
+
+int ofnode_get_child_count(ofnode parent)
+{
+	ofnode child;
+	int num = 0;
+
+	ofnode_for_each_subnode(child, parent)
+		num++;
+
+	return num;
 }
 
 static int decode_timing_property(ofnode node, const char *name,

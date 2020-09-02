@@ -9,11 +9,14 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <log.h>
 #include <asm-generic/io.h>
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dwc3-uboot.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <malloc.h>
@@ -24,6 +27,12 @@
 #include <clk.h>
 #include <usb/xhci.h>
 
+struct dwc3_glue_data {
+	struct clk_bulk		clks;
+	struct reset_ctl_bulk	resets;
+	fdt_addr_t regs;
+};
+
 struct dwc3_generic_plat {
 	fdt_addr_t base;
 	u32 maximum_speed;
@@ -33,8 +42,7 @@ struct dwc3_generic_plat {
 struct dwc3_generic_priv {
 	void *base;
 	struct dwc3 dwc3;
-	struct phy *phys;
-	int num_phys;
+	struct phy_bulk phys;
 };
 
 struct dwc3_generic_host_priv {
@@ -48,6 +56,7 @@ static int dwc3_generic_probe(struct udevice *dev,
 	int rc;
 	struct dwc3_generic_plat *plat = dev_get_platdata(dev);
 	struct dwc3 *dwc3 = &priv->dwc3;
+	struct dwc3_glue_data *glue = dev_get_platdata(dev->parent);
 
 	dwc3->dev = dev;
 	dwc3->maximum_speed = plat->maximum_speed;
@@ -56,9 +65,21 @@ static int dwc3_generic_probe(struct udevice *dev,
 	dwc3_of_parse(dwc3);
 #endif
 
-	rc = dwc3_setup_phy(dev, &priv->phys, &priv->num_phys);
+	/*
+	 * It must hold whole USB3.0 OTG controller in resetting to hold pipe
+	 * power state in P2 before initializing TypeC PHY on RK3399 platform.
+	 */
+	if (device_is_compatible(dev->parent, "rockchip,rk3399-dwc3")) {
+		reset_assert_bulk(&glue->resets);
+		udelay(1);
+	}
+
+	rc = dwc3_setup_phy(dev, &priv->phys);
 	if (rc)
 		return rc;
+
+	if (device_is_compatible(dev->parent, "rockchip,rk3399-dwc3"))
+		reset_deassert_bulk(&glue->resets);
 
 	priv->base = map_physmem(plat->base, DWC3_OTG_REGS_END, MAP_NOCACHE);
 	dwc3->regs = priv->base + DWC3_GLOBALS_REGS_START;
@@ -79,7 +100,7 @@ static int dwc3_generic_remove(struct udevice *dev,
 	struct dwc3 *dwc3 = &priv->dwc3;
 
 	dwc3_remove(dwc3);
-	dwc3_shutdown_phy(dev, priv->phys, priv->num_phys);
+	dwc3_shutdown_phy(dev, &priv->phys);
 	unmap_physmem(dwc3->regs, MAP_NOCACHE);
 
 	return 0;
@@ -186,12 +207,6 @@ U_BOOT_DRIVER(dwc3_generic_host) = {
 	.flags = DM_FLAG_ALLOC_PRIV_DMA,
 };
 #endif
-
-struct dwc3_glue_data {
-	struct clk_bulk		clks;
-	struct reset_ctl_bulk	resets;
-	fdt_addr_t regs;
-};
 
 struct dwc3_glue_ops {
 	void (*select_dr_mode)(struct udevice *dev, int index,
@@ -395,6 +410,12 @@ static int dwc3_glue_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+	if (glue->resets.count == 0) {
+		ret = dwc3_glue_reset_init(child, glue);
+		if (ret)
+			return ret;
+	}
+
 	while (child) {
 		enum usb_dr_mode dr_mode;
 
@@ -421,10 +442,13 @@ static int dwc3_glue_remove(struct udevice *dev)
 
 static const struct udevice_id dwc3_glue_ids[] = {
 	{ .compatible = "xlnx,zynqmp-dwc3" },
+	{ .compatible = "xlnx,versal-dwc3" },
 	{ .compatible = "ti,keystone-dwc3"},
 	{ .compatible = "ti,dwc3", .data = (ulong)&ti_ops },
 	{ .compatible = "ti,am437x-dwc3", .data = (ulong)&ti_ops },
 	{ .compatible = "ti,am654-dwc3" },
+	{ .compatible = "rockchip,rk3328-dwc3" },
+	{ .compatible = "rockchip,rk3399-dwc3" },
 	{ }
 };
 

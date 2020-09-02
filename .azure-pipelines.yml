@@ -1,7 +1,8 @@
 variables:
   windows_vm: vs2017-win2016
   ubuntu_vm: ubuntu-18.04
-  ci_runner_image: trini/u-boot-gitlab-ci-runner:bionic-20200403-27Apr2020
+  macos_vm: macOS-10.15
+  ci_runner_image: trini/u-boot-gitlab-ci-runner:bionic-20200526-18Jun2020
   # Add '-u 0' options for Azure pipelines, otherwise we get "permission
   # denied" error when it tries to "useradd -m -u 1001 vsts_azpcontainer",
   # since our $(ci_runner_image) user is not root.
@@ -43,6 +44,20 @@ jobs:
           MSYSTEM: MSYS
           # Tell MSYS2 not to ‘cd’ our startup directory to HOME
           CHERE_INVOKING: yes
+
+  - job: tools_only_macOS
+    displayName: 'Ensure host tools build for macOS X'
+    pool:
+      vmImage: $(macos_vm)
+    steps:
+      - script: brew install make
+        displayName: Brew install dependencies
+      - script: |
+          gmake tools-only_config tools-only NO_SDL=1 \
+            HOSTCFLAGS="-I/usr/local/opt/openssl@1.1/include" \
+            HOSTLDFLAGS="-L/usr/local/opt/openssl@1.1/lib" \
+            -j$(sysctl -n hw.logicalcpu)
+        displayName: 'Perform tools-only build'
 
   - job: cppcheck
     displayName: 'Static code analysis with cppcheck'
@@ -150,6 +165,19 @@ jobs:
           # We cannot use "container" like other jobs above, as buildman
           # seems to hang forever with pre-configured "container" environment
           docker run -v $PWD:$(work_dir) $(ci_runner_image) /bin/bash $(work_dir)/build.sh
+
+  - job: nokia_rx51_test
+    displayName: 'Run tests for Nokia RX-51 (aka N900)'
+    pool:
+      vmImage: $(ubuntu_vm)
+    container:
+      image: $(ci_runner_image)
+      options: $(container_option)
+    steps:
+      - script: |
+          ./tools/buildman/buildman --fetch-arch arm
+          export PATH=~/.buildman-toolchains/gcc-9.2.0-nolibc/arm-linux-gnueabi/bin/:$PATH
+          test/nokia_rx51_test.sh
 
   - job: test_py
     displayName: 'test.py'

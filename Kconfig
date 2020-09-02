@@ -146,7 +146,7 @@ config SYS_MALLOC_F_LEN
 	default 0x2000 if (ARCH_IMX8 || ARCH_IMX8M || ARCH_MX7 || \
 			   ARCH_MX7ULP || ARCH_MX6 || ARCH_MX5 || \
 			   ARCH_LS1012A || ARCH_LS1021A || ARCH_LS1043A || \
-			   ARCH_LS1046A)
+			   ARCH_LS1046A || ARCH_QEMU)
 	default 0x400
 	help
 	  Before relocation, memory is very limited on many platforms. Still,
@@ -268,7 +268,7 @@ config BUILD_TARGET
 	default "u-boot-elf.srec" if RCAR_GEN3
 	default "u-boot.itb" if SPL_LOAD_FIT && (ARCH_ROCKCHIP || \
 				ARCH_SUNXI || RISCV || ARCH_ZYNQMP)
-	default "u-boot.kwb" if KIRKWOOD
+	default "u-boot.kwb" if ARCH_KIRKWOOD
 	default "u-boot-with-spl.bin" if ARCH_AT91 && SPL_NAND_SUPPORT
 	default "u-boot-with-spl.imx" if ARCH_MX6 && SPL
 	help

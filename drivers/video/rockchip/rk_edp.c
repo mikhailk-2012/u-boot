@@ -9,6 +9,7 @@
 #include <display.h>
 #include <dm.h>
 #include <edid.h>
+#include <log.h>
 #include <malloc.h>
 #include <panel.h>
 #include <regmap.h>
@@ -20,6 +21,7 @@
 #include <asm/arch-rockchip/grf_rk3288.h>
 #include <asm/arch-rockchip/hardware.h>
 #include <dt-bindings/clock/rk3288-cru.h>
+#include <linux/delay.h>
 
 #define MAX_CR_LOOP 5
 #define MAX_EQ_LOOP 5
@@ -1060,7 +1062,8 @@ static int rk_edp_probe(struct udevice *dev)
 	rk_setreg(&priv->grf->soc_con12, 1 << 4);
 
 	/* select epd signal from vop0 or vop1 */
-	rk_setreg(&priv->grf->soc_con6, (vop_id == 1) ? (1 << 5) : (1 << 5));
+	rk_clrsetreg(&priv->grf->soc_con6, (1 << 5),
+	    (vop_id == 1) ? (1 << 5) : (0 << 5));
 
 	rockchip_edp_wait_hpd(priv);
 

@@ -10,8 +10,12 @@
 #include <fsl_ddr_sdram.h>
 #include <init.h>
 #include <hang.h>
+#include <log.h>
+#include <net.h>
 #include <vsprintf.h>
+#include <asm/cache.h>
 #include <asm/io.h>
+#include <asm/ptrace.h>
 #include <linux/errno.h>
 #include <asm/system.h>
 #include <fm_eth.h>
@@ -1529,9 +1533,8 @@ int dram_init_banksize(void)
 void efi_add_known_memory(void)
 {
 	int i;
-	phys_addr_t ram_start, start;
+	phys_addr_t ram_start;
 	phys_size_t ram_size;
-	u64 pages;
 
 	/* Add RAM */
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
@@ -1549,11 +1552,8 @@ void efi_add_known_memory(void)
 		    gd->arch.resv_ram < ram_start + ram_size)
 			ram_size = gd->arch.resv_ram - ram_start;
 #endif
-		start = (ram_start + EFI_PAGE_MASK) & ~EFI_PAGE_MASK;
-		pages = (ram_size + EFI_PAGE_MASK) >> EFI_PAGE_SHIFT;
-
-		efi_add_memory_map(start, pages, EFI_CONVENTIONAL_MEMORY,
-				   false);
+		efi_add_memory_map(ram_start, ram_size,
+				   EFI_CONVENTIONAL_MEMORY);
 	}
 }
 #endif

@@ -8,7 +8,10 @@
 #include <debug_uart.h>
 #include <dm.h>
 #include <hang.h>
+#include <image.h>
+#include <init.h>
 #include <irq_func.h>
+#include <log.h>
 #include <malloc.h>
 #include <spl.h>
 #include <syscon.h>
@@ -161,8 +164,8 @@ void board_init_f(ulong flags)
 
 	ret = x86_spl_init();
 	if (ret) {
-		debug("Error %d\n", ret);
-		panic("x86_spl_init fail");
+		printf("x86_spl_init: error %d\n", ret);
+		hang();
 	}
 #if IS_ENABLED(CONFIG_TPL) || IS_ENABLED(CONFIG_SYS_COREBOOT)
 	gd->bd = malloc(sizeof(*gd->bd));

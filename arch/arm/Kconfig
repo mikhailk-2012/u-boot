@@ -553,7 +553,7 @@ config ARCH_DAVINCI
 	help
 	  Support for TI's DaVinci platform.
 
-config KIRKWOOD
+config ARCH_KIRKWOOD
 	bool "Marvell Kirkwood"
 	select ARCH_MISC_INIT
 	select BOARD_EARLY_INIT_F
@@ -576,7 +576,7 @@ config TARGET_APF27
 	select CPU_ARM926EJS
 	select SUPPORT_SPL
 
-config ORION5X
+config ARCH_ORION5X
 	bool "Marvell Orion"
 	select CPU_ARM926EJS
 
@@ -873,11 +873,11 @@ config ARCH_MX7ULP
 config ARCH_MX7
 	bool "Freescale MX7"
 	select ARCH_MISC_INIT
-	select BOARD_EARLY_INIT_F
 	select CPU_V7A
 	select SYS_FSL_HAS_SEC if IMX_HAB
 	select SYS_FSL_SEC_COMPAT_4
 	select SYS_FSL_SEC_LE
+	imply BOARD_EARLY_INIT_F
 	imply MXC_GPIO
 	imply SYS_THUMB_BUILD
 
@@ -1142,7 +1142,7 @@ config ARCH_ZYNQMP
 	imply MP
 	imply DM_USB_GADGET
 
-config TEGRA
+config ARCH_TEGRA
 	bool "NVIDIA Tegra"
 	imply DISTRO_DEFAULTS
 	imply FAT_WRITE
@@ -1162,6 +1162,17 @@ config TARGET_VEXPRESS64_JUNO
 	bool "Support Versatile Express Juno Development Platform"
 	select ARM64
 	select PL01X_SERIAL
+	select DM
+	select OF_CONTROL
+	select OF_BOARD
+	select CLK
+	select DM_SERIAL
+	select ARM_PSCI_FW
+	select PSCI_RESET
+	select DM
+	select BLK
+	select USB
+	select DM_USB
 
 config TARGET_LS2080A_EMU
 	bool "Support ls2080a_emu"
@@ -1571,6 +1582,7 @@ config ARCH_UNIPHIER
 	bool "Socionext UniPhier SoCs"
 	select BOARD_LATE_INIT
 	select DM
+	select DM_ETH
 	select DM_GPIO
 	select DM_I2C
 	select DM_MMC
@@ -1596,7 +1608,7 @@ config ARCH_UNIPHIER
 	  Support for UniPhier SoC family developed by Socionext Inc.
 	  (formerly, System LSI Business Division of Panasonic Corporation)
 
-config STM32
+config ARCH_STM32
 	bool "Support STMicroelectronics STM32 MCU with cortex M"
 	select CPU_V7M
 	select DM
@@ -1766,7 +1778,7 @@ source "arch/arm/mach-keystone/Kconfig"
 
 source "arch/arm/mach-kirkwood/Kconfig"
 
-source "arch/arm/cpu/arm926ejs/lpc32xx/Kconfig"
+source "arch/arm/mach-lpc32xx/Kconfig"
 
 source "arch/arm/mach-mvebu/Kconfig"
 
@@ -1893,7 +1905,6 @@ source "board/hisilicon/hikey/Kconfig"
 source "board/hisilicon/hikey960/Kconfig"
 source "board/hisilicon/poplar/Kconfig"
 source "board/isee/igep003x/Kconfig"
-source "board/phytec/pcm051/Kconfig"
 source "board/silica/pengwyn/Kconfig"
 source "board/spear/spear300/Kconfig"
 source "board/spear/spear310/Kconfig"

@@ -9,10 +9,14 @@
 #define _EFI_LOADER_H 1
 
 #include <common.h>
+#include <blk.h>
+#include <log.h>
 #include <part_efi.h>
 #include <efi_api.h>
 #include <image.h>
 #include <pe.h>
+
+struct blk_desc;
 
 static inline int guidcmp(const void *g1, const void *g2)
 {
@@ -41,6 +45,10 @@ static inline void *guidcpy(void *dst, const void *src)
 #define U_BOOT_HOST_DEV_GUID \
 	EFI_GUID(0xbbe4e671, 0x5773, 0x4ea1, \
 		 0x9a, 0xab, 0x3a, 0x7d, 0xbf, 0x40, 0xc4, 0x82)
+/* GUID used as root for virtio devices */
+#define U_BOOT_VIRTIO_DEV_GUID \
+	EFI_GUID(0x63293792, 0xadf5, 0x9325, \
+		 0xb9, 0x9f, 0x4e, 0x0e, 0x45, 0x5c, 0x1b, 0x1e)
 
 /* Use internal device tree when starting UEFI application */
 #define EFI_FDT_USE_INTERNAL NULL
@@ -394,6 +402,8 @@ efi_status_t efi_disk_register(void);
 int efi_disk_create_partitions(efi_handle_t parent, struct blk_desc *desc,
 			       const char *if_typename, int diskid,
 			       const char *pdevname);
+/* Check if it is EFI system partition */
+bool efi_disk_is_system_part(efi_handle_t handle);
 /* Called by bootefi to make GOP (graphical) interface available */
 efi_status_t efi_gop_register(void);
 /* Called by bootefi to make the network interface available */
@@ -543,8 +553,7 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 				efi_uintn_t *descriptor_size,
 				uint32_t *descriptor_version);
 /* Adds a range into the EFI memory map */
-efi_status_t efi_add_memory_map(uint64_t start, uint64_t pages, int memory_type,
-				bool overlap_only_ram);
+efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type);
 /* Adds a conventional range into the EFI memory map */
 efi_status_t efi_add_conventional_memory_map(u64 ram_start, u64 ram_end,
 					     u64 ram_top);
@@ -699,7 +708,8 @@ struct efi_load_option {
 	const u8 *optional_data;
 };
 
-void efi_deserialize_load_option(struct efi_load_option *lo, u8 *data);
+efi_status_t efi_deserialize_load_option(struct efi_load_option *lo, u8 *data,
+					 efi_uintn_t *size);
 unsigned long efi_serialize_load_option(struct efi_load_option *lo, u8 **data);
 efi_status_t efi_bootmgr_load(efi_handle_t *handle);
 

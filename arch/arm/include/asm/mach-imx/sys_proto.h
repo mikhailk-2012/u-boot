@@ -9,8 +9,11 @@
 
 #include <asm/io.h>
 #include <asm/mach-imx/regs-common.h>
-#include <common.h>
+#include <asm/mach-imx/module_fuse.h>
+#include <linux/bitops.h>
 #include "../arch-imx/cpu.h"
+
+struct bd_info;
 
 #define soc_rev() (get_cpu_rev() & 0xFF)
 #define is_soc_rev(rev) (soc_rev() == rev)
@@ -181,7 +184,7 @@ char nxp_board_rev_string(void);
  * Initializes on-chip ethernet controllers.
  * to override, implement board_eth_init()
  */
-int fecmxc_initialize(bd_t *bis);
+int fecmxc_initialize(struct bd_info *bis);
 u32 get_ahb_clk(void);
 u32 get_periph_clk(void);
 
@@ -197,4 +200,6 @@ unsigned long call_imx_sip(unsigned long id, unsigned long reg0,
 unsigned long call_imx_sip_ret2(unsigned long id, unsigned long reg0,
 				unsigned long *reg1, unsigned long reg2,
 				unsigned long reg3);
+
+void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
 #endif

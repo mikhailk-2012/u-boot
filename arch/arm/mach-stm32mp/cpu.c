@@ -7,12 +7,16 @@
 #include <cpu_func.h>
 #include <debug_uart.h>
 #include <env.h>
+#include <init.h>
+#include <log.h>
 #include <misc.h>
+#include <net.h>
 #include <asm/io.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
+#include <linux/bitops.h>
 
 /* RCC register */
 #define RCC_TZCR		(STM32_RCC_BASE + 0x00)
@@ -74,6 +78,12 @@
  */
 #define PKG_SHIFT	27
 #define PKG_MASK	GENMASK(2, 0)
+
+/*
+ * early TLB into the .data section so that it not get cleared
+ * with 16kB allignment (see TTBR0_BASE_ADDR_MASK)
+ */
+u8 early_tlb[PGTABLE_SIZE] __section(".data") __aligned(0x4000);
 
 #if !defined(CONFIG_SPL) || defined(CONFIG_SPL_BUILD)
 #ifndef CONFIG_TFABOOT
@@ -187,11 +197,39 @@ u32 get_bootmode(void)
 }
 
 /*
+ * initialize the MMU and activate cache in SPL or in U-Boot pre-reloc stage
+ * MMU/TLB is updated in enable_caches() for U-Boot after relocation
+ * or is deactivated in U-Boot entry function start.S::cpu_init_cp15
+ */
+static void early_enable_caches(void)
+{
+	/* I-cache is already enabled in start.S: cpu_init_cp15 */
+
+	if (CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
+		return;
+
+	gd->arch.tlb_size = PGTABLE_SIZE;
+	gd->arch.tlb_addr = (unsigned long)&early_tlb;
+
+	dcache_enable();
+
+	if (IS_ENABLED(CONFIG_SPL_BUILD))
+		mmu_set_region_dcache_behaviour(STM32_SYSRAM_BASE,
+						STM32_SYSRAM_SIZE,
+						DCACHE_DEFAULT_OPTION);
+	else
+		mmu_set_region_dcache_behaviour(STM32_DDR_BASE, STM32_DDR_SIZE,
+						DCACHE_DEFAULT_OPTION);
+}
+
+/*
  * Early system init
  */
 int arch_cpu_init(void)
 {
 	u32 boot_mode;
+
+	early_enable_caches();
 
 	/* early armv7 timer init: needed for polling */
 	timer_init();
@@ -225,7 +263,14 @@ int arch_cpu_init(void)
 
 void enable_caches(void)
 {
-	/* Enable D-cache. I-cache is already enabled in start.S */
+	/* I-cache is already enabled in start.S: icache_enable() not needed */
+
+	/* deactivate the data cache, early enabled in arch_cpu_init() */
+	dcache_disable();
+	/*
+	 * update MMU after relocation and enable the data cache
+	 * warning: the TLB location udpated in board_f.c::reserve_mmu
+	 */
 	dcache_enable();
 }
 
@@ -234,6 +279,11 @@ static u32 read_idc(void)
 	setbits_le32(RCC_DBGCFGR, RCC_DBGCFGR_DBGCKEN);
 
 	return readl(DBGMCU_IDC);
+}
+
+u32 get_cpu_dev(void)
+{
+	return (read_idc() & DBGMCU_IDC_DEV_ID_MASK) >> DBGMCU_IDC_DEV_ID_SHIFT;
 }
 
 u32 get_cpu_rev(void)
@@ -266,11 +316,7 @@ static u32 get_cpu_rpn(void)
 
 u32 get_cpu_type(void)
 {
-	u32 id;
-
-	id = (read_idc() & DBGMCU_IDC_DEV_ID_MASK) >> DBGMCU_IDC_DEV_ID_SHIFT;
-
-	return (id << 16) | get_cpu_rpn();
+	return (get_cpu_dev() << 16) | get_cpu_rpn();
 }
 
 /* Get Package options from OTP */
@@ -433,6 +479,10 @@ static void setup_boot_mode(void)
 		break;
 	case BOOT_FLASH_NAND:
 		env_set("boot_device", "nand");
+		env_set("boot_instance", "0");
+		break;
+	case BOOT_FLASH_SPINAND:
+		env_set("boot_device", "spi-nand");
 		env_set("boot_instance", "0");
 		break;
 	case BOOT_FLASH_NOR:

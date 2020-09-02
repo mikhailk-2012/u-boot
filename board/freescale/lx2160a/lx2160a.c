@@ -6,6 +6,7 @@
 #include <common.h>
 #include <clock_legacy.h>
 #include <dm.h>
+#include <init.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include <i2c.h>
 #include <malloc.h>
@@ -15,6 +16,7 @@
 #include <fsl_sec.h>
 #include <asm/io.h>
 #include <fdt_support.h>
+#include <linux/bitops.h>
 #include <linux/libfdt.h>
 #include <fsl-mc/fsl_mc.h>
 #include <env_internal.h>
@@ -584,6 +586,9 @@ int board_init(void)
 	sec_init();
 #endif
 
+#if !defined(CONFIG_SYS_EARLY_PCI_INIT) && defined(CONFIG_DM_ETH)
+	pci_init();
+#endif
 	return 0;
 }
 
@@ -629,7 +634,9 @@ void fdt_fixup_board_enet(void *fdt)
 	if (get_mc_boot_status() == 0 &&
 	    (is_lazy_dpl_addr_valid() || get_dpl_apply_status() == 0)) {
 		fdt_status_okay(fdt, offset);
+#ifndef CONFIG_DM_ETH
 		fdt_fixup_board_phy(fdt);
+#endif
 	} else {
 		fdt_status_fail(fdt, offset);
 	}
