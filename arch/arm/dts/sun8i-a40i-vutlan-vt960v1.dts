@@ -1,0 +1,549 @@
+/*
+ * Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/dts-v1/;
+#include "sun8i-r40.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	model = "Vutlan VT960v1";
+	compatible = "vutlan,vt960v1", "allwinner,sun8i-r40";
+
+	aliases {
+		ethernet0 = &gmac;
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};	
+
+
+	leds {
+		compatible = "gpio-leds";
+		
+		hdd {
+			label = "hdd-activity";
+			gpios = <&pio 8 4 GPIO_ACTIVE_HIGH>; /* PI4 */
+		};
+
+		err {
+			label = "error";
+			gpios = <&pio 7 26 GPIO_ACTIVE_HIGH>; /* PH26 */
+		};
+
+		status {
+			label = "status";
+			gpios = <&pio 8 15 GPIO_ACTIVE_HIGH>; /* PI15 */
+			default-state = "on";
+		};
+
+		can-bus {
+			label = "can-bus";
+			gpios = <&pio 1 9 GPIO_ACTIVE_HIGH>; /* PB9 */
+		};
+
+		relay1 {
+			label = "relay1";
+			gpios = <&pio 6 2 GPIO_ACTIVE_HIGH>; /* PG2 */
+		};
+		relay2 {
+			label = "relay2";
+			gpios = <&pio 6 3 GPIO_ACTIVE_HIGH>; /* PG3 */
+		};
+		relay3 {
+			label = "relay3";
+			gpios = <&pio 6 4 GPIO_ACTIVE_HIGH>; /* PG4 */
+		};
+		relay4 {
+			label = "relay4";
+			gpios = <&pio 6 5 GPIO_ACTIVE_HIGH>; /* PG5 */
+		};
+
+		//usb0-pwr {
+		//	label = "usb0-pwr";  /* usb 0 (OTG) */
+		//	gpios = <&pio 8 13 GPIO_ACTIVE_HIGH>; /* PI13 */
+		//	default-state = "on";
+		//};
+		//usb1-pwr {
+		//	label = "usb1-pwr";  /* usb 1 */
+		//	gpios = <&pio 1 12 GPIO_ACTIVE_HIGH>; /* PB12 */
+		//	default-state = "on";
+		//};
+		//usb2-pwr {
+		//	label = "usb2-pwr";  /* internal lte modem */
+		//	gpios = <&pio 1 4 GPIO_ACTIVE_HIGH>; /* PB4 */
+		//	default-state = "off";
+		//};
+	};
+};
+
+
+/*
+&cpu0 {
+	clock-frequency = <912000000>;
+	regulators = "vcc-cpu";
+	clocks = <&ccu CLK_CPU>;
+	clock-latency = <2000000>;
+	operating-points = <
+		// kHz	  uV
+		1200000	1300000
+		1152000	1300000
+		1104000	1240000
+		1008000	1160000
+		912000	1100000
+		816000	1000000
+		720000	1000000
+		600000	1000000
+		480000	1000000
+		>;
+	#cooling-cells = <2>;
+};
+&cpu1 {
+	clock-frequency = <912000000>;
+	regulators = "vcc-cpu";
+	clocks = <&ccu CLK_CPU>;
+	clock-latency = <2000000>;
+	operating-points = <
+		// kHz	  uV
+		1200000	1300000
+		1152000	1300000
+		1104000	1240000
+		1008000	1160000
+		912000	1100000
+		816000	1000000
+		720000	1000000
+		600000	1000000
+		480000	1000000
+		>;
+	#cooling-cells = <2>;
+};
+&cpu2 {
+	clock-frequency = <912000000>;
+	regulators = "vcc-cpu";
+	clocks = <&ccu CLK_CPU>;
+	clock-latency = <2000000>;
+	operating-points = <
+		// kHz	  uV
+		1200000	1300000
+		1152000	1300000
+		1104000	1240000
+		1008000	1160000
+		912000	1100000
+		816000	1000000
+		720000	1000000
+		600000	1000000
+		480000	1000000
+		>;
+	#cooling-cells = <2>;
+};
+&cpu3 {
+	clock-frequency = <912000000>;
+	regulators = "vcc-cpu";
+	clocks = <&ccu CLK_CPU>;
+	clock-latency = <2000000>;
+	operating-points = <
+		// kHz	  uV
+		1200000	1300000
+		1152000	1300000
+		1104000	1240000
+		1008000	1160000
+		912000	1100000
+		816000	1000000
+		720000	1000000
+		600000	1000000
+		480000	1000000
+		>;
+	#cooling-cells = <2>;
+};
+*/
+
+&i2c0 {
+	status = "okay";
+
+	axp22x: pmic@34 {
+		compatible = "x-powers,axp221";
+		reg = <0x34>;
+		interrupt-parent = <&nmi_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&i2c4 {
+	clock-frequency = <100000>;
+	status = "okay";
+	
+	mcp79400: mcp79400@6f {
+		compatible = "microchip,mcp7940x";
+		reg = <0x6f>;
+	};
+	
+	/* TODO: vtx16, vtx40 */
+};
+
+/* console */ 
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pb_pins>;
+	status = "okay";
+};
+
+/* rs485 */
+&uart5 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart5_pins_vt960v1>;
+	status = "okay";
+};
+
+/* 1-wire */
+&uart7 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart7_pins_vt960v1>;
+	status = "okay";
+};
+
+
+&ahci {
+	ahci-supply = <&reg_dldo4>;
+	phy-supply = <&reg_eldo2>; 
+	status = "okay";
+};
+
+&de {
+	status = "okay";
+};
+
+&tcon_tv0 {
+	status = "okay";
+};
+
+
+#include "axp22x.dtsi"
+
+&reg_dcdc1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-3v3";
+};
+
+&reg_dcdc2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "vcc-cpu";
+};
+
+&reg_dcdc3 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "vdd-sys";
+};
+
+&reg_dcdc4 {
+	regulator-always-on;
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1300000>;
+	regulator-name = "dcdc4";
+};
+
+&reg_dcdc5 {
+	regulator-always-on;
+	/* ddr3 Supply voltage operating range */
+	regulator-min-microvolt = <1425000>;
+	regulator-max-microvolt = <1575000>;
+	regulator-name = "vcc-dram";
+};
+
+/* vcc-tvin vcc-25 */
+&reg_aldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <2790000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-tvin";
+};
+
+/* vcc-pc vcc-emmcvq18 */
+&reg_aldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1620000>;
+	regulator-max-microvolt = <1980000>;
+	regulator-name = "vcc-emmcvq18";
+};
+
+&reg_aldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3100000>;
+	regulator-name = "avcc";
+};
+
+/* vcc-io-wifi vcc-pg */
+&reg_dldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi-io-vcc-pg";
+};
+
+&reg_dldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi";
+};
+
+&reg_dldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "wlan-power-ext";
+};
+
+/* vcc-sata-25 vcc-pf */
+&reg_dldo4 {
+	regulator-always-on;
+	regulator-min-microvolt = <2500000>;
+	regulator-max-microvolt = <2500000>;
+	regulator-name = "vcc-sata25-vcc-pf";
+};
+
+&reg_eldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <2800000>;
+	regulator-max-microvolt = <2800000>;
+	regulator-name = "isp-dvdd";
+};
+
+/* vcc-sata-12 */
+&reg_eldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1200000>;
+	regulator-max-microvolt = <1200000>;
+	regulator-name = "vcc-sata12";
+};
+
+&reg_eldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <2800000>;
+	regulator-max-microvolt = <2800000>;
+	regulator-name = "vcc-pe";
+};
+
+&reg_ldo_io0 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-ctp";
+	status = "okay";
+};
+
+&reg_ldo_io1 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-i2s-18";
+	status = "okay";
+};
+
+&reg_dc1sw {
+	regulator-always-on;
+	regulator-name = "vcc-lcd";
+	status = "okay";
+};
+
+&ac_power_supply {
+	status = "okay";
+};
+
+
+
+&pio {
+	pinctrl-names = "default";
+	pinctrl-0 = <&clk_out_a_pin>;
+
+	 
+	mmc0_cd_pin_vt960v1: mmc0_cd_pin_vt960v1@0 {
+		pins = "PI11";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	
+	uart5_pins_vt960v1: uart5_pins_vt960v1@0 {
+		pins = "PH6", "PH7";
+		function = "uart5";
+	};
+	uart7_pins_vt960v1: uart7_pins_vt960v1@0 {
+		pins = "PI20", "PI21";
+		function = "uart7";		
+	};
+
+	spi2_pins_vt960v1: spi2_pins_vt960v1@0 {
+		pins = "PC20", "PC21", "PC22";
+		function = "spi2";
+	};
+	spi2_cs_pin_vt960v1: spi2_cs_pin_vt960v1@0 {
+		pins = "PC19";
+		function = "spi2";
+	};
+	
+	can_ph_pins: can-ph-pins {
+		pins = "PH20", "PH21";
+		function = "can";
+	};
+
+	usb0_id_detect_pin: usb0_id_detect_pin@0 {
+		pins = "PI10";
+		function = "gpio_in";
+		bias-pull-up;
+	};
+	usb0_vbus_detect_pin: usb0_vbus_detect_pin@0 {
+		pins = "PH17";
+		function = "gpio_in";
+	};
+
+	gmac_pins_mii_a: gmac_pins_mii_a@0 {
+		pins = "PA0", "PA1", "PA2",
+		       "PA3", "PA4", "PA5", "PA6",
+		       "PA7", "PA8", "PA9", "PA10",
+		       "PA11", "PA12", "PA13", "PA14",
+		       "PA15", "PA16", "PA17";
+		function = "gmac";
+		drive-strength = <30>;
+	};
+};
+
+&gmac {
+	pinctrl-names = "default";
+	pinctrl-0 = <&gmac_pins_mii_a>;
+	phy-handle = <&phy1>;
+	phy-mode = "mii";
+	phy-supply = <&reg_dcdc1>;
+	status = "okay";
+};
+&gmac_mdio {
+	phy1: ethernet-phy@1 {
+		compatible = "ethernet-phy-ieee802.3-c22";
+		reg = <1>;
+		max-speed = <100>;
+		reset-gpios = <&pio 7 22 GPIO_ACTIVE_LOW>; /* PH22 */
+		reset-assert-us = <10000>;
+		reset-deassert-us = <25000>;
+	};
+};
+
+/* mmc0 card detect - ball V24 : gpio PI11 */
+&mmc0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc0_pins>, <&mmc0_cd_pin_vt960v1>;
+	vmmc-supply = <&reg_dcdc1>;
+	bus-width = <4>;
+	cd-gpios = <&pio 8 11 GPIO_ACTIVE_HIGH>; 
+	cd-inverted;
+	no-1-8-v;
+	status = "okay";
+};
+
+&mmc2 { 
+	vmmc-supply = <&reg_dcdc1>;
+	vqmmc-supply = <&reg_aldo2>;
+	bus-width = <8>;
+	non-removable;
+	cap-mmc-hw-reset;	
+	status = "okay";
+	
+	emmc: emmc@0 {
+		reg = <0>;
+		compatible = "mmc-card";
+	};
+};
+
+
+&ehci0 {
+	status = "okay";
+};
+&ohci0 {
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "host"; //"peripheral";
+	status = "okay";
+};
+
+&ehci1 {
+	status = "okay";
+};
+&ohci1 {
+	status = "okay";
+};
+
+/* internal LTE modem */
+&ehci2 {
+	status = "okay";
+};
+&ohci2 {
+	status = "okay";
+};
+
+
+&usb_power_supply {
+	status = "okay";
+};
+
+&usbphy {
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb0_id_detect_pin>, <&usb0_vbus_detect_pin>;
+
+	usb0_id_det-gpio = <&pio 7 21 GPIO_ACTIVE_HIGH>; /* PH21 */
+	usb0_vbus_det-gpios = <&pio 7 17 GPIO_ACTIVE_HIGH>; /* PH17 */
+	//usb0_vbus-supply = <&reg_usb0_pwr>;
+	usb0_vbus_power-supply = <&usb_power_supply>;
+
+	//usb1_vbus-supply = <&reg_usb1_drv>;
+	//usb2_vbus-supply = <&reg_usb2_drv>;
+	
+	status = "okay";
+};
