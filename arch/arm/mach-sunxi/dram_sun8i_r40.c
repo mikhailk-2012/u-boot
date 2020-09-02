@@ -12,7 +12,7 @@
 #include <asm/arch/dram.h>
 #include <asm/arch/prcm.h>
 #include <axp_pmic.h>
-
+#include <linux/delay.h>
 #include "dram_sun8i_r40/mctl_hal.h"
 
 //#define OKA40I_C_PARA
