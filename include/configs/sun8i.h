@@ -17,7 +17,4 @@
  */
 #include <configs/sunxi-common.h>
 
-#define CONFIG_SYS_MEMTEST_START (CONFIG_SPL_BSS_START_ADDR + CONFIG_SPL_BSS_MAX_SIZE)
-#define CONFIG_SYS_MEMTEST_END (CONFIG_SYS_MEMTEST_START + 0x04000000)
-/* 64 MiB */
 #endif /* __CONFIG_H */
